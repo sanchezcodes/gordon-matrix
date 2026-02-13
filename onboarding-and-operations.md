@@ -7,7 +7,7 @@ This runbook is for deploying OpenClaw on a VPS (Ubuntu 24.04 LTS) with Cloudfla
 If you want the shortest reliable setup:
 
 1. Set up the VPS (steps 1–8 in the VPS setup section).
-2. Add required GitHub Actions secrets (`VPS_*`, gateway token, tunnel token, and at least one provider key). For internet webhook delivery, also set `OPENCLAW_HOOKS_TOKEN`.
+2. Add required GitHub Actions secrets **as environment secrets** under the `gordon-matrix` environment (not as repository secrets). Required: `VPS_*`, gateway token, tunnel token, and at least one provider key. For internet webhook delivery, also set `OPENCLAW_HOOKS_TOKEN`.
 3. Deploy with workflow input `reset_config=true` (first deploy or when changing core auth/channel config).
 4. Open your Cloudflare hostname, then pair the browser/device once if prompted.
 5. Re-deploy later with `reset_config=false` for normal updates.
@@ -159,10 +159,12 @@ Notes:
 
 ## 4) Set GitHub Actions secrets
 
+**Important:** All secrets must be added as **environment secrets** under the `gordon-matrix` environment in GitHub (Settings > Environments > gordon-matrix), NOT as repository-level secrets. The deploy workflow references `environment: gordon-matrix`.
+
 Required secrets:
 
 - `VPS_HOST` — IP or hostname of the VPS
-- `VPS_SSH_KEY` — SSH private key (ed25519) for the `gordon` user
+- `VPS_SSH_KEY` — SSH private key (ed25519) for the `gordon` user. **Must be without passphrase** (generate with `ssh-keygen -t ed25519 -N ""`)
 - `VPS_SSH_KNOWN_HOSTS` — host key fingerprint (run `ssh-keyscan -p <port> <host>` from a trusted network)
 - `OPENCLAW_GATEWAY_TOKEN`
 - at least one provider key:
@@ -197,7 +199,7 @@ Use these examples when you populate GitHub repository secrets:
 | Secret | Required? | Example value | How to get it | Default if optional |
 |---|---|---|---|---|
 | `VPS_HOST` | Yes | `203.0.113.10` | IP of your VPS | n/a |
-| `VPS_SSH_KEY` | Yes | `-----BEGIN OPENSSH...` | `ssh-keygen -t ed25519` | n/a |
+| `VPS_SSH_KEY` | Yes | `-----BEGIN OPENSSH...` | `ssh-keygen -t ed25519 -N ""` (must be without passphrase) | n/a |
 | `VPS_SSH_PORT` | No | `22` | SSH port of your VPS | `22` |
 | `VPS_SSH_KNOWN_HOSTS` | Yes | `203.0.113.10 ssh-ed25519 AAAA...` | Run `ssh-keyscan -p <port> <host>` from a trusted network | n/a |
 | `OPENCLAW_GATEWAY_TOKEN` | Yes | `f0f57a7f...` (64 hex chars) | `openssl rand -hex 32` | n/a |
