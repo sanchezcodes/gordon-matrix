@@ -12,7 +12,7 @@
       "maxConcurrent": 4,
       "workspace": "/data/workspace",
       "sandbox": {
-        "mode": "none",
+        "mode": "off",
         "scope": "agent"
       }
     },
