@@ -50,7 +50,7 @@ Agent docs shipped in the image:
 - `/app/docs/agent/readme.md`
 - `/app/docs/agent/env.md`
 
-## Recommended bootstrap prompts for Jarvis
+## Recommended bootstrap prompts for Gordon
 
 Use prompts like:
 
