@@ -13,3 +13,4 @@
 - `OPENCLAW_HOOKS_TOKEN` (when set, enables top-level `hooks` config at startup)
 - `OPENCLAW_HOOKS_PATH` (default: `/hooks`)
 - `OPENCLAW_HOOKS_ALLOWED_AGENT_IDS` (comma-separated allowlist; default: `*`)
+- `TELEGRAM_BOT_TOKEN` (when set, enables Telegram channel auto-wiring at startup)

@@ -33,7 +33,8 @@ This template is tuned for **private VPS deployment + Cloudflare Zero Trust**:
 5. Validate deploy health and access OpenClaw via your Cloudflare-protected hostname.
 6. If the Control UI shows `disconnected (1008): pairing required`, approve the pending device request from inside the container: `docker exec -it gordon-matrix sh`.
 7. For Discord setup, set `DISCORD_BOT_TOKEN` and `DISCORD_GUILD_ID` (optionally `DISCORD_CHANNEL_ID`); startup auto-configures Discord with open guild-channel policy and seeds a default channel key (`DISCORD_CHANNEL_ID` or `general`).
-8. For webhook setup, set `OPENCLAW_HOOKS_TOKEN` (optionally `OPENCLAW_HOOKS_PATH` and `OPENCLAW_HOOKS_ALLOWED_AGENT_IDS`), and target `agentId: "hooks"` in `/hooks/agent` payloads.
+8. For Telegram setup, set `TELEGRAM_BOT_TOKEN` (created via @BotFather); startup auto-configures Telegram with pairing DM policy, open group policy, and no mention requirement.
+9. For webhook setup, set `OPENCLAW_HOOKS_TOKEN` (optionally `OPENCLAW_HOOKS_PATH` and `OPENCLAW_HOOKS_ALLOWED_AGENT_IDS`), and target `agentId: "hooks"` in `/hooks/agent` payloads.
 
 For exact commands and values, follow the runbook sections:
 

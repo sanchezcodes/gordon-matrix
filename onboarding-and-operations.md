@@ -12,6 +12,7 @@ If you want the shortest reliable setup:
 4. Open your Cloudflare hostname, then pair the browser/device once if prompted.
 5. Re-deploy later with `reset_config=false` for normal updates.
 6. For Discord, set `DISCORD_BOT_TOKEN` and `DISCORD_GUILD_ID` (optionally `DISCORD_CHANNEL_ID`) so startup auto-configures Discord with open guild-channel policy and a default channel entry.
+7. For Telegram, set `TELEGRAM_BOT_TOKEN` (from @BotFather); startup auto-configures Telegram with pairing DM policy, open group policy, and no mention requirement.
 
 ## 1) Prerequisites
 
@@ -182,6 +183,7 @@ Optional:
 - `DISCORD_BOT_TOKEN`
 - `DISCORD_GUILD_ID`
 - `DISCORD_CHANNEL_ID` (defaults to `general` when Discord is auto-configured)
+- `TELEGRAM_BOT_TOKEN` (required only when you want Telegram channel enabled)
 - `OPENCLAW_CONTROL_UI_ALLOW_INSECURE_AUTH` (defaults to `false` each deploy unless explicitly set)
 
 Startup auto-wiring behaviors:
@@ -191,6 +193,7 @@ Startup auto-wiring behaviors:
 - When `OPENCLAW_HOOKS_TOKEN` is set, startup enables top-level `hooks`, writes the shared token, and keeps webhook path/agent allowlist aligned with env defaults (`/hooks`, `*`).
 - Startup selects `agents.defaults.model.primary` from available providers (priority: OpenAI, then Anthropic, then Google) and keeps fallbacks aligned with available provider keys.
 - When both `DISCORD_BOT_TOKEN` and `DISCORD_GUILD_ID` are set, startup enables Discord plugin/binding, sets `channels.discord.groupPolicy="open"`, enables wildcard channel access, and seeds a default channel key (`DISCORD_CHANNEL_ID` or `general`).
+- When `TELEGRAM_BOT_TOKEN` is set, startup enables `channels.telegram`, sets `dmPolicy="pairing"` and `groupPolicy="open"`, disables `requireMention` on the wildcard group, and adds a binding from agent `main` to channel `telegram`.
 
 ### Secret value cookbook
 
@@ -213,6 +216,7 @@ Use these examples when you populate GitHub repository secrets:
 | `DISCORD_BOT_TOKEN` | No | `MTA...` | Discord Developer Portal → Bot token | Unset |
 | `DISCORD_GUILD_ID` | No | `123456789012345678` | Discord Developer Mode → copy server ID | Unset |
 | `DISCORD_CHANNEL_ID` | No | `123456789012345678` | Discord Developer Mode → copy channel ID | `general` |
+| `TELEGRAM_BOT_TOKEN` | No | `123456789:ABCdef...` | Telegram @BotFather → `/newbot` | Unset |
 | `OPENCLAW_CONTROL_UI_ALLOW_INSECURE_AUTH` | No | `false` (recommended) or `true` | Set `true` only when you intentionally want token-only auth without pairing | `false` enforced by workflow when unset |
 
 ## 5) Deploy
@@ -393,6 +397,20 @@ docker exec gordon-matrix npx openclaw status
 ```
 
 - If you intentionally use `--force`, ensure `lsof` is installed in the image.
+
+### Telegram not responding
+
+- Confirm `TELEGRAM_BOT_TOKEN` is set in GitHub Secrets (environment secrets under `gordon-matrix`) and redeploy.
+- Confirm the bot was created via @BotFather and the token is valid.
+- Confirm `/data/openclaw.json` includes the auto-configured Telegram channel entries after startup.
+- Check that no other bot instance is polling with the same token (Telegram allows only one long-poll consumer per token).
+- If the bot is in a group, ensure it was added as a member and has message read permissions (disable "Group Privacy" in @BotFather settings if needed).
+- Verify gateway reachability:
+
+```bash
+docker exec gordon-matrix npx openclaw channels list
+docker exec gordon-matrix npx openclaw status --deep
+```
 
 ### Control UI auth issues
 

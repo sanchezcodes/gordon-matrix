@@ -446,6 +446,63 @@ if (discordBotToken && discordGuildId) {
   console.log("Skipping Discord auto-wiring: set both DISCORD_BOT_TOKEN and DISCORD_GUILD_ID.");
 }
 
+const telegramBotToken = trimValue(process.env.TELEGRAM_BOT_TOKEN);
+if (telegramBotToken) {
+  // Zero-touch Telegram bootstrapping:
+  // bot token alone is enough for a working default integration.
+  const bindings = ensureArray(config, "bindings");
+  const hasTelegramBinding = bindings.some(
+    (binding) =>
+      binding &&
+      typeof binding === "object" &&
+      binding.agentId === "main" &&
+      binding.match &&
+      typeof binding.match === "object" &&
+      binding.match.channel === "telegram",
+  );
+  if (!hasTelegramBinding) {
+    bindings.push({
+      agentId: "main",
+      match: {
+        channel: "telegram",
+      },
+    });
+    console.log("Added default Telegram binding for agent main");
+    changed = true;
+  }
+
+  const channels = ensureObject(config, "channels");
+  const telegramChannel = ensureObject(channels, "telegram");
+  if (telegramChannel.enabled !== true) {
+    telegramChannel.enabled = true;
+    console.log("Set channels.telegram.enabled=true");
+    changed = true;
+  }
+  if (telegramChannel.dmPolicy !== "pairing") {
+    // Requested template default: require pairing before DM works.
+    telegramChannel.dmPolicy = "pairing";
+    console.log("Set channels.telegram.dmPolicy=pairing");
+    changed = true;
+  }
+  if (telegramChannel.groupPolicy !== "open") {
+    // Requested template default: permit groups without allowlist out of the box.
+    telegramChannel.groupPolicy = "open";
+    console.log("Set channels.telegram.groupPolicy=open");
+    changed = true;
+  }
+
+  const groups = ensureObject(telegramChannel, "groups");
+  const wildcardGroup = ensureObject(groups, "*");
+  if (wildcardGroup.requireMention !== false) {
+    wildcardGroup.requireMention = false;
+    console.log("Set channels.telegram.groups.*.requireMention=false");
+    changed = true;
+  }
+} else if (Object.prototype.hasOwnProperty.call(process.env, "TELEGRAM_BOT_TOKEN")) {
+  // Env var is explicitly set but empty/blank — keep non-fatal for deploy continuity.
+  console.log("Skipping Telegram auto-wiring: TELEGRAM_BOT_TOKEN is set but empty.");
+}
+
 if (changed) {
   fs.writeFileSync(configPath, `${JSON.stringify(config, null, 2)}\n`);
 } else {
