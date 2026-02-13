@@ -450,6 +450,15 @@ const telegramBotToken = trimValue(process.env.TELEGRAM_BOT_TOKEN);
 if (telegramBotToken) {
   // Zero-touch Telegram bootstrapping:
   // bot token alone is enough for a working default integration.
+  const plugins = ensureObject(config, "plugins");
+  const pluginEntries = ensureObject(plugins, "entries");
+  const telegramPlugin = ensureObject(pluginEntries, "telegram");
+  if (telegramPlugin.enabled !== true) {
+    telegramPlugin.enabled = true;
+    console.log("Set plugins.entries.telegram.enabled=true");
+    changed = true;
+  }
+
   const bindings = ensureArray(config, "bindings");
   const hasTelegramBinding = bindings.some(
     (binding) =>
