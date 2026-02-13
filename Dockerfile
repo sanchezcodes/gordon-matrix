@@ -1,13 +1,14 @@
 FROM node:22-bookworm
 
-# Install Bun (required for build scripts)
-RUN curl -fsSL https://bun.sh/install | bash
+# Install Bun (required for build scripts) — pinned version to mitigate supply-chain risk
+ARG BUN_VERSION=1.2.2
+RUN curl -fsSL https://bun.sh/install | bash -s "bun-v${BUN_VERSION}"
 ENV PATH="/app/node_modules/.bin:/root/.bun/bin:${PATH}"
 
 RUN corepack enable
 
 # Install build/runtime dependencies and cloudflared for tunnel access.
-# Keep git + vim available for SSH-based diagnostics inside Fly machines.
+# Keep git + vim available for SSH-based diagnostics inside the container.
 RUN apt-get update && \
     apt-get install -y --no-install-recommends git ca-certificates curl gnupg lsof python3 python-is-python3 ripgrep vim && \
     curl -fsSL https://pkg.cloudflare.com/cloudflare-main.gpg | tee /usr/share/keyrings/cloudflare-main.gpg >/dev/null && \
@@ -50,5 +51,11 @@ RUN chmod +x /app/docker-entrypoint.sh
 
 ENV NODE_ENV=production
 
+# Ensure /data is accessible to non-root user at runtime
+RUN mkdir -p /data && chown node:node /data
+
+# Runtime runs as non-root (node user = uid 1000) to limit container-escape impact
+USER node
+
 ENTRYPOINT ["/app/docker-entrypoint.sh"]
-CMD ["node", "dist/index.js", "gateway", "run", "--allow-unconfigured", "--port", "3000", "--bind", "auto"]
+CMD ["node", "dist/index.js", "gateway", "run", "--allow-unconfigured", "--port", "3000", "--bind", "loopback"]
