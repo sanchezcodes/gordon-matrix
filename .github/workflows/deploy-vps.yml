@@ -20,6 +20,7 @@ jobs:
   deploy:
     name: Deploy OpenClaw to VPS
     runs-on: ubuntu-latest
+    environment: gordon-matrix
     concurrency: deploy-group
     permissions:
       contents: read
