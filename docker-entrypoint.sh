@@ -91,6 +91,7 @@ OPENCLAW_CONFIG_FILE="$CONFIG_FILE" OPENCLAW_STATE_DIR="$CONFIG_DIR" \
   node "$APP_DIR/scripts/sync-runtime-config.mjs"
 
 if [ -f "$CONFIG_FILE" ]; then
+  chmod 600 "$CONFIG_FILE" || true
   echo "OpenClaw config ready at $CONFIG_FILE"
 else
   echo "Warning: Config file not found at $CONFIG_FILE"
