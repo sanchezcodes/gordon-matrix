@@ -51,8 +51,9 @@ RUN chmod +x /app/docker-entrypoint.sh
 
 ENV NODE_ENV=production
 
-# Ensure /data and all node user dirs (npm/npx cache) are accessible at runtime
-RUN mkdir -p /data && chown -R node:node /data /home/node
+# Ensure /data, /app, and node home are accessible to non-root user at runtime.
+# /app must be owned by node so npx can chmod openclaw.mjs via symlink.
+RUN mkdir -p /data && chown -R node:node /data /home/node /app
 
 # Runtime runs as non-root (node user = uid 1000) to limit container-escape impact
 USER node
