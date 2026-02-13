@@ -51,8 +51,8 @@ RUN chmod +x /app/docker-entrypoint.sh
 
 ENV NODE_ENV=production
 
-# Ensure /data is accessible to non-root user at runtime
-RUN mkdir -p /data && chown node:node /data
+# Ensure /data and npm cache are accessible to non-root user at runtime
+RUN mkdir -p /data /home/node/.npm && chown -R node:node /data /home/node/.npm
 
 # Runtime runs as non-root (node user = uid 1000) to limit container-escape impact
 USER node
