@@ -502,15 +502,24 @@ Gmail integration requires a one-time OAuth credential setup. Tokens are persist
 
 ### Step 1: Store OAuth client credentials in the container
 
-```bash
-# On your local machine — copy to VPS
-scp client_secret_*.json gordon@<VPS_HOST>:/opt/gordon-matrix/data/gog/
+> **Permission note:** The `/opt/gordon-matrix/data/` directory on the host is owned by uid 1000 (the container's `node` user) with mode 700. The `gordon` deploy user cannot write to it directly. Use `docker cp` to inject files into the running container.
 
-# On the VPS — import into gog
+```bash
+# On your local machine — copy to VPS (stage in gordon's home dir, which he owns)
+scp client_secret_*.json gordon@<VPS_HOST>:/opt/gordon-matrix/
+
+# On the VPS — inject file into the running container via docker cp
+docker cp /opt/gordon-matrix/client_secret_*.json gordon-matrix:/data/gog/
+
+# Fix ownership (docker cp creates files as root; the container runs as node)
+docker exec --user root gordon-matrix chown node:node /data/gog/client_secret_*.json
+
+# Import into gog (runs as node user, the container default)
 docker exec gordon-matrix gog auth credentials /data/gog/client_secret_*.json
 
-# Clean up the raw file (credentials are now in gog's encrypted keyring)
-rm /opt/gordon-matrix/data/gog/client_secret_*.json
+# Clean up — both the host staging file and the container copy
+rm /opt/gordon-matrix/client_secret_*.json
+docker exec gordon-matrix rm -f /data/gog/client_secret_*.json
 ```
 
 ### Step 2: Authorize the Gmail account (headless/remote flow)
