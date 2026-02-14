@@ -94,7 +94,7 @@ const providerDefaults = [
     provider: "openai",
     envVar: "OPENAI_API_KEY",
     profileKey: "openai:default",
-    primaryModel: "openai/gpt-5.3",
+    primaryModel: "openai/gpt-5.2",
     fallbackModels: ["openai/gpt-4o"],
   },
   {
