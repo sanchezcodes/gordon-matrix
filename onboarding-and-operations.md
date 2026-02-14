@@ -210,32 +210,32 @@ Startup auto-wiring behaviors:
 
 Use these examples when you populate GitHub repository secrets:
 
-| Secret | Required? | Example value | How to get it | Default if optional |
-|---|---|---|---|---|
-| `VPS_HOST` | Yes | `203.0.113.10` | IP of your VPS | n/a |
-| `VPS_SSH_KEY` | Yes | `-----BEGIN OPENSSH...` | `ssh-keygen -t ed25519 -N ""` (must be without passphrase) | n/a |
-| `VPS_SSH_PORT` | No | `22` | SSH port of your VPS | `22` |
-| `VPS_SSH_KNOWN_HOSTS` | Yes | `203.0.113.10 ssh-ed25519 AAAA...` | Run `ssh-keyscan -p <port> <host>` from a trusted network | n/a |
-| `OPENCLAW_GATEWAY_TOKEN` | Yes | `f0f57a7f...` (64 hex chars) | `openssl rand -hex 32` | n/a |
-| `CLOUDFLARE_TUNNEL_TOKEN` | Yes | `eyJhIjoi...` | Cloudflare Zero Trust tunnel dashboard, or `cloudflared tunnel token <tunnel-name>` | n/a |
-| `OPENCLAW_HOOKS_TOKEN` | No (Yes for webhooks) | `c0ffeec0...` (64 hex chars) | `openssl rand -hex 32` | Unset (webhooks disabled) |
-| `OPENCLAW_HOOKS_PATH` | No | `/hooks` | Optional override for webhook base path | `/hooks` |
-| `OPENCLAW_HOOKS_ALLOWED_AGENT_IDS` | No | `*` or `main` or `main,hooks` | Optional explicit `agentId` allowlist | `*` |
-| `ANTHROPIC_API_KEY` | One provider key required | `sk-ant-...` | Anthropic Console | Unset unless you add it |
-| `OPENAI_API_KEY` | One provider key required | `sk-proj-...` | OpenAI API keys page | Unset unless you add it |
-| `GEMINI_API_KEY` | One provider key required | `AIza...` | Google AI Studio / Google Cloud credentials | Unset unless you add it |
-| `DISCORD_BOT_TOKEN` | No | `MTA...` | Discord Developer Portal → Bot token | Unset |
-| `DISCORD_GUILD_ID` | No | `123456789012345678` | Discord Developer Mode → copy server ID | Unset |
-| `DISCORD_CHANNEL_ID` | No | `123456789012345678` | Discord Developer Mode → copy channel ID | `general` |
-| `TELEGRAM_BOT_TOKEN` | No | `123456789:ABCdef...` | Telegram @BotFather → `/newbot` | Unset |
-| `BRAVE_API_KEY` | No | `BSA...` | [Brave Search API](https://brave.com/search/api/) | Unset (web search disabled) |
-| `PERPLEXITY_API_KEY` | No | `pplx-...` | [Perplexity API dashboard](https://docs.perplexity.ai) | Unset |
-| `FIRECRAWL_API_KEY` | No | `fc-...` | [Firecrawl dashboard](https://firecrawl.dev) | Unset |
-| `GOG_ACCOUNT` | No (Yes for Gmail) | `user@gmail.com` | Your Gmail address | Unset (Gmail disabled) |
-| `GOG_KEYRING_PASSWORD` | No (Yes for Gmail) | `a3b9f7e2...` (64 hex chars) | `openssl rand -hex 32` — must remain stable across deploys | Unset |
-| `GOG_KEYRING_BACKEND` | No | `file` | Always `file` for Docker (no system keychain) | `file` |
-| `GOG_CONFIG_DIR` | No | `/data/gog` | Override gog config/credential directory | `/data/gog` |
-| `OPENCLAW_CONTROL_UI_ALLOW_INSECURE_AUTH` | No | `false` (recommended) or `true` | Set `true` only when you intentionally want token-only auth without pairing | `false` enforced by workflow when unset |
+| Secret                                    | Required?                 | Example value                      | How to get it                                                                       | Default if optional                     |
+| ----------------------------------------- | ------------------------- | ---------------------------------- | ----------------------------------------------------------------------------------- | --------------------------------------- |
+| `VPS_HOST`                                | Yes                       | `203.0.113.10`                     | IP of your VPS                                                                      | n/a                                     |
+| `VPS_SSH_KEY`                             | Yes                       | `-----BEGIN OPENSSH...`            | `ssh-keygen -t ed25519 -N ""` (must be without passphrase)                          | n/a                                     |
+| `VPS_SSH_PORT`                            | No                        | `22`                               | SSH port of your VPS                                                                | `22`                                    |
+| `VPS_SSH_KNOWN_HOSTS`                     | Yes                       | `203.0.113.10 ssh-ed25519 AAAA...` | Run `ssh-keyscan -p <port> <host>` from a trusted network                           | n/a                                     |
+| `OPENCLAW_GATEWAY_TOKEN`                  | Yes                       | `f0f57a7f...` (64 hex chars)       | `openssl rand -hex 32`                                                              | n/a                                     |
+| `CLOUDFLARE_TUNNEL_TOKEN`                 | Yes                       | `eyJhIjoi...`                      | Cloudflare Zero Trust tunnel dashboard, or `cloudflared tunnel token <tunnel-name>` | n/a                                     |
+| `OPENCLAW_HOOKS_TOKEN`                    | No (Yes for webhooks)     | `c0ffeec0...` (64 hex chars)       | `openssl rand -hex 32`                                                              | Unset (webhooks disabled)               |
+| `OPENCLAW_HOOKS_PATH`                     | No                        | `/hooks`                           | Optional override for webhook base path                                             | `/hooks`                                |
+| `OPENCLAW_HOOKS_ALLOWED_AGENT_IDS`        | No                        | `*` or `main` or `main,hooks`      | Optional explicit `agentId` allowlist                                               | `*`                                     |
+| `ANTHROPIC_API_KEY`                       | One provider key required | `sk-ant-...`                       | Anthropic Console                                                                   | Unset unless you add it                 |
+| `OPENAI_API_KEY`                          | One provider key required | `sk-proj-...`                      | OpenAI API keys page                                                                | Unset unless you add it                 |
+| `GEMINI_API_KEY`                          | One provider key required | `AIza...`                          | Google AI Studio / Google Cloud credentials                                         | Unset unless you add it                 |
+| `DISCORD_BOT_TOKEN`                       | No                        | `MTA...`                           | Discord Developer Portal → Bot token                                                | Unset                                   |
+| `DISCORD_GUILD_ID`                        | No                        | `123456789012345678`               | Discord Developer Mode → copy server ID                                             | Unset                                   |
+| `DISCORD_CHANNEL_ID`                      | No                        | `123456789012345678`               | Discord Developer Mode → copy channel ID                                            | `general`                               |
+| `TELEGRAM_BOT_TOKEN`                      | No                        | `123456789:ABCdef...`              | Telegram @BotFather → `/newbot`                                                     | Unset                                   |
+| `BRAVE_API_KEY`                           | No                        | `BSA...`                           | [Brave Search API](https://brave.com/search/api/)                                   | Unset (web search disabled)             |
+| `PERPLEXITY_API_KEY`                      | No                        | `pplx-...`                         | [Perplexity API dashboard](https://docs.perplexity.ai)                              | Unset                                   |
+| `FIRECRAWL_API_KEY`                       | No                        | `fc-...`                           | [Firecrawl dashboard](https://firecrawl.dev)                                        | Unset                                   |
+| `GOG_ACCOUNT`                             | No (Yes for Gmail)        | `user@gmail.com`                   | Your Gmail address                                                                  | Unset (Gmail disabled)                  |
+| `GOG_KEYRING_PASSWORD`                    | No (Yes for Gmail)        | `a3b9f7e2...` (64 hex chars)       | `openssl rand -hex 32` — must remain stable across deploys                          | Unset                                   |
+| `GOG_KEYRING_BACKEND`                     | No                        | `file`                             | Always `file` for Docker (no system keychain)                                       | `file`                                  |
+| `GOG_CONFIG_DIR`                          | No                        | `/data/gog`                        | Override gog config/credential directory                                            | `/data/gog`                             |
+| `OPENCLAW_CONTROL_UI_ALLOW_INSECURE_AUTH` | No                        | `false` (recommended) or `true`    | Set `true` only when you intentionally want token-only auth without pairing         | `false` enforced by workflow when unset |
 
 ## 5) Deploy
 
@@ -504,22 +504,37 @@ Gmail integration requires a one-time OAuth credential setup. Tokens are persist
 
 > **Permission note:** The `/opt/gordon-matrix/data/` directory on the host is owned by uid 1000 (the container's `node` user) with mode 700. The `gordon` deploy user cannot write to it directly. Use `docker cp` to inject files into the running container.
 
+**Option A — SCP available** (direct SSH access to VPS):
+
 ```bash
 # On your local machine — copy to VPS (stage in gordon's home dir, which he owns)
 scp client_secret_*.json gordon@<VPS_HOST>:/opt/gordon-matrix/
+```
 
-# On the VPS — inject file into the running container via docker cp
-docker cp /opt/gordon-matrix/client_secret_*.json gordon-matrix:/data/gog/
+**Option B — No SCP / tunneled access only** (e.g. Cloudflare Tunnel blocks direct SSH file transfer):
+
+```bash
+# On the VPS — create the file manually with the JSON content from Google Cloud Console
+cat > /opt/gordon-matrix/client_secret.json << 'EOF'
+{"installed":{"client_id":"...","project_id":"...","auth_uri":"...","token_uri":"...","auth_provider_x509_cert_url":"...","client_secret":"...","redirect_uris":["http://localhost"]}}
+EOF
+```
+
+Then, regardless of which option you used:
+
+```bash
+# Inject file into the running container via docker cp
+docker cp /opt/gordon-matrix/client_secret*.json gordon-matrix:/data/gog/
 
 # Fix ownership (docker cp creates files as root; the container runs as node)
-docker exec --user root gordon-matrix chown node:node /data/gog/client_secret_*.json
+docker exec --user root gordon-matrix chown node:node /data/gog/client_secret*.json
 
 # Import into gog (runs as node user, the container default)
-docker exec gordon-matrix gog auth credentials /data/gog/client_secret_*.json
+docker exec gordon-matrix gog auth credentials /data/gog/client_secret*.json
 
 # Clean up — both the host staging file and the container copy
-rm /opt/gordon-matrix/client_secret_*.json
-docker exec gordon-matrix rm -f /data/gog/client_secret_*.json
+rm /opt/gordon-matrix/client_secret*.json
+docker exec gordon-matrix rm -f /data/gog/client_secret*.json
 ```
 
 ### Step 2: Authorize the Gmail account (headless/remote flow)
