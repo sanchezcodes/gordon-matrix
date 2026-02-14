@@ -530,12 +530,13 @@ if (telegramBotToken) {
   }
 }
 
-// Remove deny-all plugins.allow from persisted configs (gateway bug #2073 treats
-// built-in channels as plugins and blocks them when the allowlist is empty).
+// Remove plugins.allow entirely from persisted configs (gateway bug #2073 treats
+// built-in channels as plugins; any allowlist — empty or not — activates filtering
+// and can block channels like Discord when only "telegram" is listed).
 const pluginsBlock = config.plugins;
-if (pluginsBlock && Array.isArray(pluginsBlock.allow) && pluginsBlock.allow.length === 0) {
+if (pluginsBlock && Array.isArray(pluginsBlock.allow)) {
   delete pluginsBlock.allow;
-  console.log("Removed empty plugins.allow (deny-all breaks built-in channels)");
+  console.log("Removed plugins.allow (allowlist filtering breaks built-in channels)");
   changed = true;
 }
 
