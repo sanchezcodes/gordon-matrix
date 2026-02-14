@@ -138,6 +138,17 @@ if (defaults.workspace !== desiredWorkspace) {
   changed = true;
 }
 
+// Force sandbox.mode to "off" — Docker socket is not available inside the container,
+// so any other value (including the invalid "none" from earlier deploys) causes
+// "spawn docker EACCES" errors at runtime.
+const sandbox = ensureObject(defaults, "sandbox");
+if (sandbox.mode !== "off") {
+  const previous = sandbox.mode;
+  sandbox.mode = "off";
+  console.log(`Set agents.defaults.sandbox.mode=off (was ${JSON.stringify(previous)})`);
+  changed = true;
+}
+
 const hasMainAgent = agentList.some(
   (agent) => agent && typeof agent === "object" && trimValue(agent.id) === "main",
 );
