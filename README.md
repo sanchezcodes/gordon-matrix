@@ -35,6 +35,7 @@ This template is tuned for **private VPS deployment + Cloudflare Zero Trust**:
 7. For Discord setup, set `DISCORD_BOT_TOKEN` and `DISCORD_GUILD_ID` (optionally `DISCORD_CHANNEL_ID`); startup auto-configures Discord with open guild-channel policy and seeds a default channel key (`DISCORD_CHANNEL_ID` or `general`).
 8. For Telegram setup, set `TELEGRAM_BOT_TOKEN` (created via @BotFather); startup auto-configures Telegram with pairing DM policy, open group policy, and no mention requirement.
 9. For webhook setup, set `OPENCLAW_HOOKS_TOKEN` (optionally `OPENCLAW_HOOKS_PATH` and `OPENCLAW_HOOKS_ALLOWED_AGENT_IDS`), and target `agentId: "hooks"` in `/hooks/agent` payloads.
+10. For web tools, optionally set `BRAVE_API_KEY` (or `PERPLEXITY_API_KEY`) for web search, and `FIRECRAWL_API_KEY` for enhanced web fetching; `web_fetch` is enabled by default with no key required.
 
 For exact commands and values, follow the runbook sections:
 

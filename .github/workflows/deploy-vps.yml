@@ -69,6 +69,9 @@ jobs:
           export DISCORD_GUILD_ID="${DISCORD_GUILD_ID}"
           export DISCORD_CHANNEL_ID="${DISCORD_CHANNEL_ID}"
           export TELEGRAM_BOT_TOKEN="${TELEGRAM_BOT_TOKEN}"
+          export BRAVE_API_KEY="${BRAVE_API_KEY}"
+          export PERPLEXITY_API_KEY="${PERPLEXITY_API_KEY}"
+          export FIRECRAWL_API_KEY="${FIRECRAWL_API_KEY}"
           export OPENCLAW_CONTROL_UI_ALLOW_INSECURE_AUTH="${OPENCLAW_CONTROL_UI_ALLOW_INSECURE_AUTH}"
           export RESET_CONFIG="${RESET_CONFIG}"
           export OPENCLAW_VERSION="${OPENCLAW_VERSION}"
@@ -98,6 +101,9 @@ jobs:
           DISCORD_GUILD_ID: ${{ secrets.DISCORD_GUILD_ID }}
           DISCORD_CHANNEL_ID: ${{ secrets.DISCORD_CHANNEL_ID }}
           TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          BRAVE_API_KEY: ${{ secrets.BRAVE_API_KEY }}
+          PERPLEXITY_API_KEY: ${{ secrets.PERPLEXITY_API_KEY }}
+          FIRECRAWL_API_KEY: ${{ secrets.FIRECRAWL_API_KEY }}
           OPENCLAW_CONTROL_UI_ALLOW_INSECURE_AUTH: ${{ secrets.OPENCLAW_CONTROL_UI_ALLOW_INSECURE_AUTH || 'false' }}
           RESET_CONFIG: ${{ inputs.reset_config || 'false' }}
           OPENCLAW_VERSION: ${{ inputs.openclaw_version || 'main' }}
@@ -109,8 +115,15 @@ jobs:
             echo "::warning::Discord auto-wiring skipped (DISCORD_GUILD_ID missing)"
           fi
           [ -n "${TELEGRAM_BOT_TOKEN}" ] && echo "::notice::Telegram auto-wiring enabled" || echo "::notice::Telegram disabled (TELEGRAM_BOT_TOKEN not set)"
+          if [ -n "${BRAVE_API_KEY}" ] || [ -n "${PERPLEXITY_API_KEY}" ]; then
+            echo "::notice::Web search auto-wiring enabled"
+          else
+            echo "::notice::Web search disabled (no BRAVE_API_KEY or PERPLEXITY_API_KEY)"
+          fi
         env:
           OPENCLAW_HOOKS_TOKEN: ${{ secrets.OPENCLAW_HOOKS_TOKEN }}
           DISCORD_BOT_TOKEN: ${{ secrets.DISCORD_BOT_TOKEN }}
           DISCORD_GUILD_ID: ${{ secrets.DISCORD_GUILD_ID }}
           TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          BRAVE_API_KEY: ${{ secrets.BRAVE_API_KEY }}
+          PERPLEXITY_API_KEY: ${{ secrets.PERPLEXITY_API_KEY }}

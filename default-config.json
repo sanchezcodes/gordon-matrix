@@ -48,6 +48,14 @@
   "tools": {
     "elevated": {
       "allowFrom": {}
+    },
+    "web": {
+      "search": {
+        "enabled": false
+      },
+      "fetch": {
+        "enabled": true
+      }
     }
   },
   "plugins": {},

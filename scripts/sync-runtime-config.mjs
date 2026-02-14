@@ -552,6 +552,73 @@ if (pluginsBlock && Array.isArray(pluginsBlock.allow)) {
   changed = true;
 }
 
+// ── Web tools ──────────────────────────────────────────────────────
+const tools = ensureObject(config, "tools");
+const webTools = ensureObject(tools, "web");
+
+// web_fetch: always enabled (no API key required for basic operation).
+const webFetch = ensureObject(webTools, "fetch");
+if (webFetch.enabled !== true) {
+  webFetch.enabled = true;
+  console.log("Set tools.web.fetch.enabled=true");
+  changed = true;
+}
+
+// Firecrawl fallback for web_fetch (bot-circumvention).
+const firecrawlApiKey = trimValue(process.env.FIRECRAWL_API_KEY);
+if (firecrawlApiKey) {
+  const firecrawl = ensureObject(webFetch, "firecrawl");
+  if (firecrawl.enabled !== true) {
+    firecrawl.enabled = true;
+    console.log("Set tools.web.fetch.firecrawl.enabled=true");
+    changed = true;
+  }
+} else {
+  // Disable Firecrawl if key was removed.
+  if (webFetch.firecrawl && webFetch.firecrawl.enabled === true) {
+    webFetch.firecrawl.enabled = false;
+    console.log("Set tools.web.fetch.firecrawl.enabled=false (key removed)");
+    changed = true;
+  }
+}
+
+// web_search: enabled when BRAVE_API_KEY or PERPLEXITY_API_KEY is set.
+// Brave takes priority (it is the OpenClaw default provider).
+const braveApiKey = trimValue(process.env.BRAVE_API_KEY);
+const perplexityApiKey = trimValue(process.env.PERPLEXITY_API_KEY);
+const webSearch = ensureObject(webTools, "search");
+
+if (braveApiKey) {
+  if (webSearch.enabled !== true) {
+    webSearch.enabled = true;
+    console.log("Set tools.web.search.enabled=true");
+    changed = true;
+  }
+  if (webSearch.provider !== "brave") {
+    webSearch.provider = "brave";
+    console.log("Set tools.web.search.provider=brave");
+    changed = true;
+  }
+} else if (perplexityApiKey) {
+  if (webSearch.enabled !== true) {
+    webSearch.enabled = true;
+    console.log("Set tools.web.search.enabled=true");
+    changed = true;
+  }
+  if (webSearch.provider !== "perplexity") {
+    webSearch.provider = "perplexity";
+    console.log("Set tools.web.search.provider=perplexity");
+    changed = true;
+  }
+} else {
+  // No search API key available — disable search if it was previously auto-wired.
+  if (webSearch.enabled === true) {
+    webSearch.enabled = false;
+    console.log("Set tools.web.search.enabled=false (no search API key)");
+    changed = true;
+  }
+}
+
 if (changed) {
   fs.writeFileSync(configPath, `${JSON.stringify(config, null, 2)}\n`);
 } else {

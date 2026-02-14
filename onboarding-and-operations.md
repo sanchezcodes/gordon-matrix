@@ -13,6 +13,7 @@ If you want the shortest reliable setup:
 5. Re-deploy later with `reset_config=false` for normal updates.
 6. For Discord, set `DISCORD_BOT_TOKEN` and `DISCORD_GUILD_ID` (optionally `DISCORD_CHANNEL_ID`) so startup auto-configures Discord with open guild-channel policy and a default channel entry.
 7. For Telegram, set `TELEGRAM_BOT_TOKEN` (from @BotFather); startup auto-configures Telegram with pairing DM policy, open group policy, and no mention requirement.
+8. For web tools, optionally set `BRAVE_API_KEY` (or `PERPLEXITY_API_KEY`) for web search, and `FIRECRAWL_API_KEY` for enhanced web fetching; `web_fetch` is enabled by default with no key required.
 
 ## 1) Prerequisites
 
@@ -184,6 +185,9 @@ Optional:
 - `DISCORD_GUILD_ID`
 - `DISCORD_CHANNEL_ID` (defaults to `general` when Discord is auto-configured)
 - `TELEGRAM_BOT_TOKEN` (required only when you want Telegram channel enabled)
+- `BRAVE_API_KEY` (required only when you want web search via Brave)
+- `PERPLEXITY_API_KEY` (required only when you want web search via Perplexity; Brave takes priority when both are set)
+- `FIRECRAWL_API_KEY` (required only when you want Firecrawl fallback for web_fetch)
 - `OPENCLAW_CONTROL_UI_ALLOW_INSECURE_AUTH` (defaults to `false` each deploy unless explicitly set)
 
 Startup auto-wiring behaviors:
@@ -194,6 +198,7 @@ Startup auto-wiring behaviors:
 - Startup selects `agents.defaults.model.primary` from available providers (priority: OpenAI, then Anthropic, then Google) and keeps fallbacks aligned with available provider keys.
 - When both `DISCORD_BOT_TOKEN` and `DISCORD_GUILD_ID` are set, startup enables Discord plugin/binding, sets `channels.discord.groupPolicy="open"`, enables wildcard channel access, and seeds a default channel key (`DISCORD_CHANNEL_ID` or `general`).
 - When `TELEGRAM_BOT_TOKEN` is set, startup enables `channels.telegram`, sets `dmPolicy="pairing"` and `groupPolicy="open"`, disables `requireMention` on the wildcard group, and adds a binding from agent `main` to channel `telegram`.
+- `tools.web.fetch` is always enabled (no API key required). When `BRAVE_API_KEY` is set, startup enables `tools.web.search` with `provider="brave"`. When only `PERPLEXITY_API_KEY` is set, `provider="perplexity"` is used instead (Brave takes priority). When `FIRECRAWL_API_KEY` is set, startup enables the Firecrawl fallback for web_fetch.
 
 ### Secret value cookbook
 
@@ -217,6 +222,9 @@ Use these examples when you populate GitHub repository secrets:
 | `DISCORD_GUILD_ID` | No | `123456789012345678` | Discord Developer Mode → copy server ID | Unset |
 | `DISCORD_CHANNEL_ID` | No | `123456789012345678` | Discord Developer Mode → copy channel ID | `general` |
 | `TELEGRAM_BOT_TOKEN` | No | `123456789:ABCdef...` | Telegram @BotFather → `/newbot` | Unset |
+| `BRAVE_API_KEY` | No | `BSA...` | [Brave Search API](https://brave.com/search/api/) | Unset (web search disabled) |
+| `PERPLEXITY_API_KEY` | No | `pplx-...` | [Perplexity API dashboard](https://docs.perplexity.ai) | Unset |
+| `FIRECRAWL_API_KEY` | No | `fc-...` | [Firecrawl dashboard](https://firecrawl.dev) | Unset |
 | `OPENCLAW_CONTROL_UI_ALLOW_INSECURE_AUTH` | No | `false` (recommended) or `true` | Set `true` only when you intentionally want token-only auth without pairing | `false` enforced by workflow when unset |
 
 ## 5) Deploy
