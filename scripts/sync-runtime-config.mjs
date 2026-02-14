@@ -461,15 +461,16 @@ const telegramBotToken = trimValue(process.env.TELEGRAM_BOT_TOKEN);
 if (telegramBotToken) {
   // Zero-touch Telegram bootstrapping:
   // bot token alone is enough for a working default integration.
-  // Telegram is a built-in channel, NOT a plugin — do not add plugins.entries.telegram
-  // (the gateway would override it to enabled=false and block the channel).
-
-  // Clean up stale plugin entry from previous deployments (commits before 544328c).
+  // The gateway's plugin-auto-enable treats Telegram as a plugin and creates
+  // plugins.entries.telegram.enabled=false if the entry is missing. Force it to
+  // true so auto-enable sees it's already enabled and leaves it alone (same
+  // pattern as Discord on line 365).
   const pluginsForTelegram = ensureObject(config, "plugins");
   const pluginEntriesForTelegram = ensureObject(pluginsForTelegram, "entries");
-  if (Object.prototype.hasOwnProperty.call(pluginEntriesForTelegram, "telegram")) {
-    delete pluginEntriesForTelegram.telegram;
-    console.log("Removed stale plugins.entries.telegram (Telegram is a built-in channel)");
+  const telegramPlugin = ensureObject(pluginEntriesForTelegram, "telegram");
+  if (telegramPlugin.enabled !== true) {
+    telegramPlugin.enabled = true;
+    console.log("Set plugins.entries.telegram.enabled=true");
     changed = true;
   }
 
