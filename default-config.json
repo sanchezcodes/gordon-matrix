@@ -50,9 +50,7 @@
       "allowFrom": {}
     }
   },
-  "plugins": {
-    "allow": []
-  },
+  "plugins": {},
   "discovery": {},
   "logging": {
     "redactSensitive": "tools",

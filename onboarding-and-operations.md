@@ -406,6 +406,7 @@ docker exec gordon-matrix npx openclaw status
 - Check that no other bot instance is polling with the same token (Telegram allows only one long-poll consumer per token).
 - If the bot is in a group, ensure it was added as a member and has message read permissions (disable "Group Privacy" in @BotFather settings if needed).
 - If this VPS previously deployed before the Telegram plugin-entry fix (commit `544328c`), the stale `plugins.entries.telegram` in `/data/openclaw.json` may be blocking the channel. The sync script now cleans this automatically, but you can also run a one-time deploy with `reset_config=true` to force a fresh config.
+- If `plugins.allow` is set to an empty array `[]` in `/data/openclaw.json`, the gateway treats it as a deny-all allowlist and blocks built-in channels including Telegram (gateway bug [#2073](https://github.com/openclaw/openclaw/issues/2073)). The sync script now removes empty `plugins.allow` automatically. If the issue persists, verify with `docker exec gordon-matrix sh -c 'cat /data/openclaw.json | python3 -m json.tool | grep -A2 plugins'` and redeploy or use `reset_config=true`.
 - Verify gateway reachability:
 
 ```bash

@@ -530,6 +530,15 @@ if (telegramBotToken) {
   }
 }
 
+// Remove deny-all plugins.allow from persisted configs (gateway bug #2073 treats
+// built-in channels as plugins and blocks them when the allowlist is empty).
+const pluginsBlock = config.plugins;
+if (pluginsBlock && Array.isArray(pluginsBlock.allow) && pluginsBlock.allow.length === 0) {
+  delete pluginsBlock.allow;
+  console.log("Removed empty plugins.allow (deny-all breaks built-in channels)");
+  changed = true;
+}
+
 if (changed) {
   fs.writeFileSync(configPath, `${JSON.stringify(config, null, 2)}\n`);
 } else {
