@@ -75,7 +75,8 @@ jobs:
           export NODE_OPTIONS="--max-old-space-size=4096"
 
           cd /opt/gordon-matrix/app
-          git pull origin main
+          git fetch origin main
+          git reset --hard origin/main
           docker compose up -d --build --remove-orphans
           docker ps --filter name=gordon-matrix --format "table {{.Names}}\t{{.Status}}"
           EOF
