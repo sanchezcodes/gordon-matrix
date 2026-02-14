@@ -619,6 +619,97 @@ if (braveApiKey) {
   }
 }
 
+// ── Gmail (gog) auto-wiring ──────────────────────────────────────
+// When GOG_ACCOUNT is set (and hooks are enabled), configure the Gmail
+// Pub/Sub integration.  The gateway auto-starts `gog gmail watch serve`
+// when hooks.gmail.account is present.
+const gogAccount = trimValue(process.env.GOG_ACCOUNT);
+if (gogAccount) {
+  // Gmail requires hooks — the watcher daemon posts to the hooks endpoint.
+  if (hooks.enabled !== true && hooksToken) {
+    hooks.enabled = true;
+    console.log("Set hooks.enabled=true (required for Gmail integration)");
+    changed = true;
+  }
+
+  // Ensure "gmail" preset is in hooks.presets so the gateway loads the handler.
+  const hooksPresets = ensureArray(hooks, "presets");
+  if (!hooksPresets.includes("gmail")) {
+    hooksPresets.push("gmail");
+    console.log('Added "gmail" to hooks.presets');
+    changed = true;
+  }
+
+  const gmail = ensureObject(hooks, "gmail");
+
+  if (gmail.account !== gogAccount) {
+    gmail.account = gogAccount;
+    console.log(`Set hooks.gmail.account=${gogAccount}`);
+    changed = true;
+  }
+
+  // Daemon bind configuration — loopback-only, gateway auto-starts it.
+  const serve = ensureObject(gmail, "serve");
+  if (serve.bind !== "127.0.0.1") {
+    serve.bind = "127.0.0.1";
+    console.log("Set hooks.gmail.serve.bind=127.0.0.1");
+    changed = true;
+  }
+  if (serve.port !== 8788) {
+    serve.port = 8788;
+    console.log("Set hooks.gmail.serve.port=8788");
+    changed = true;
+  }
+
+  // Ensure a binding exists for the hooks agent to receive Gmail hook invocations.
+  const bindings = ensureArray(config, "bindings");
+  const hasHooksBinding = bindings.some(
+    (binding) =>
+      binding &&
+      typeof binding === "object" &&
+      binding.agentId === "hooks" &&
+      binding.match &&
+      typeof binding.match === "object" &&
+      binding.match.channel === "hooks",
+  );
+  if (!hasHooksBinding) {
+    bindings.push({
+      agentId: "hooks",
+      match: { channel: "hooks" },
+    });
+    console.log("Added hooks binding for agent hooks (Gmail)");
+    changed = true;
+  }
+
+  if (!hooksToken) {
+    console.log(
+      "Warning: GOG_ACCOUNT is set but OPENCLAW_HOOKS_TOKEN is missing. " +
+        "Gmail integration requires hooks to be enabled. Set OPENCLAW_HOOKS_TOKEN.",
+    );
+  }
+} else {
+  // GOG_ACCOUNT absent or empty — clean up Gmail config if previously auto-wired.
+  if (hooks.gmail && hooks.gmail.account) {
+    delete hooks.gmail;
+    console.log("Removed hooks.gmail (GOG_ACCOUNT unset)");
+    changed = true;
+  }
+  if (Array.isArray(hooks.presets)) {
+    const gmailIdx = hooks.presets.indexOf("gmail");
+    if (gmailIdx !== -1) {
+      hooks.presets.splice(gmailIdx, 1);
+      console.log('Removed "gmail" from hooks.presets');
+      changed = true;
+    }
+    if (hooks.presets.length === 0) {
+      delete hooks.presets;
+    }
+  }
+  if (Object.prototype.hasOwnProperty.call(process.env, "GOG_ACCOUNT")) {
+    console.log("Skipping Gmail auto-wiring: GOG_ACCOUNT is set but empty.");
+  }
+}
+
 if (changed) {
   fs.writeFileSync(configPath, `${JSON.stringify(config, null, 2)}\n`);
 } else {

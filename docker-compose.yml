@@ -9,6 +9,7 @@ services:
     restart: unless-stopped
     environment:
       - NODE_ENV=production
+      - TERM=xterm-256color
       - OPENCLAW_PREFER_PNPM=1
       - OPENCLAW_STATE_DIR=/data
       - NODE_OPTIONS=${NODE_OPTIONS:---max-old-space-size=4096}
@@ -27,6 +28,10 @@ services:
       - BRAVE_API_KEY=${BRAVE_API_KEY:-}
       - PERPLEXITY_API_KEY=${PERPLEXITY_API_KEY:-}
       - FIRECRAWL_API_KEY=${FIRECRAWL_API_KEY:-}
+      - GOG_ACCOUNT=${GOG_ACCOUNT:-}
+      - GOG_KEYRING_PASSWORD=${GOG_KEYRING_PASSWORD:-}
+      - GOG_KEYRING_BACKEND=${GOG_KEYRING_BACKEND:-file}
+      - GOG_CONFIG_DIR=${GOG_CONFIG_DIR:-/data/gog}
       - OPENCLAW_CONTROL_UI_ALLOW_INSECURE_AUTH=${OPENCLAW_CONTROL_UI_ALLOW_INSECURE_AUTH:-false}
       - OPENCLAW_DISABLE_BONJOUR=1
       - RESET_CONFIG=${RESET_CONFIG:-false}
@@ -38,15 +43,21 @@ services:
     deploy:
       resources:
         limits:
-          cpus: "3.0"
+          cpus: '3.0'
           memory: 6G
     healthcheck:
-      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:3000').then(r=>process.exit(r.ok||r.status===401?0:1)).catch(()=>process.exit(1))"]
+      test:
+        [
+          'CMD',
+          'node',
+          '-e',
+          "fetch('http://127.0.0.1:3000').then(r=>process.exit(r.ok||r.status===401?0:1)).catch(()=>process.exit(1))",
+        ]
       interval: 30s
       timeout: 10s
       retries: 3
       start_period: 60s
     logging:
-      driver: "journald"
+      driver: 'journald'
       options:
-        tag: "gordon-matrix"
+        tag: 'gordon-matrix'

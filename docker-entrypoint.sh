@@ -60,6 +60,15 @@ start_cloudflare_tunnel
 mkdir -p "$CONFIG_DIR" "$CREDENTIALS_DIR" "$SESSIONS_DIR"
 chmod 700 "$CONFIG_DIR" "$CREDENTIALS_DIR" || true
 
+# gog credential store — persist OAuth tokens for Gmail integration.
+GOG_DIR="${GOG_CONFIG_DIR:-$CONFIG_DIR/gog}"
+if [ -n "${GOG_ACCOUNT:-}" ]; then
+  mkdir -p "$GOG_DIR"
+  chmod 700 "$GOG_DIR" || true
+  export GOG_CONFIG_DIR="$GOG_DIR"
+  export GOG_KEYRING_BACKEND="${GOG_KEYRING_BACKEND:-file}"
+fi
+
 if [ ! -d "$PERSISTENT_WORKSPACE" ]; then
   mkdir -p "$PERSISTENT_WORKSPACE"
   if [ -d "$WORKSPACE_SEED_DIR" ]; then

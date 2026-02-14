@@ -14,6 +14,7 @@ If you want the shortest reliable setup:
 6. For Discord, set `DISCORD_BOT_TOKEN` and `DISCORD_GUILD_ID` (optionally `DISCORD_CHANNEL_ID`) so startup auto-configures Discord with open guild-channel policy and a default channel entry.
 7. For Telegram, set `TELEGRAM_BOT_TOKEN` (from @BotFather); startup auto-configures Telegram with pairing DM policy, open group policy, and no mention requirement.
 8. For web tools, optionally set `BRAVE_API_KEY` (or `PERPLEXITY_API_KEY`) for web search, and `FIRECRAWL_API_KEY` for enhanced web fetching; `web_fetch` is enabled by default with no key required.
+9. For Gmail, complete the one-time OAuth setup (see "Gmail setup" below), then set `GOG_ACCOUNT`, `GOG_KEYRING_PASSWORD`, and ensure `OPENCLAW_HOOKS_TOKEN` is set; startup auto-configures Gmail Pub/Sub integration with the `hooks` agent.
 
 ## 1) Prerequisites
 
@@ -188,6 +189,10 @@ Optional:
 - `BRAVE_API_KEY` (required only when you want web search via Brave)
 - `PERPLEXITY_API_KEY` (required only when you want web search via Perplexity; Brave takes priority when both are set)
 - `FIRECRAWL_API_KEY` (required only when you want Firecrawl fallback for web_fetch)
+- `GOG_ACCOUNT` (required only when you want Gmail integration; the Gmail address to monitor)
+- `GOG_KEYRING_PASSWORD` (required with `GOG_ACCOUNT`; encrypts OAuth tokens on disk — must remain stable across deploys)
+- `GOG_KEYRING_BACKEND` (defaults to `file`; always `file` for Docker — no system keychain available)
+- `GOG_CONFIG_DIR` (defaults to `/data/gog`; override gog credential directory)
 - `OPENCLAW_CONTROL_UI_ALLOW_INSECURE_AUTH` (defaults to `false` each deploy unless explicitly set)
 
 Startup auto-wiring behaviors:
@@ -199,6 +204,7 @@ Startup auto-wiring behaviors:
 - When both `DISCORD_BOT_TOKEN` and `DISCORD_GUILD_ID` are set, startup enables Discord plugin/binding, sets `channels.discord.groupPolicy="open"`, enables wildcard channel access, and seeds a default channel key (`DISCORD_CHANNEL_ID` or `general`).
 - When `TELEGRAM_BOT_TOKEN` is set, startup enables `channels.telegram`, sets `dmPolicy="pairing"` and `groupPolicy="open"`, disables `requireMention` on the wildcard group, and adds a binding from agent `main` to channel `telegram`.
 - `tools.web.fetch` is always enabled (no API key required). When `BRAVE_API_KEY` is set, startup enables `tools.web.search` with `provider="brave"`. When only `PERPLEXITY_API_KEY` is set, `provider="perplexity"` is used instead (Brave takes priority). When `FIRECRAWL_API_KEY` is set, startup enables the Firecrawl fallback for web_fetch.
+- When `GOG_ACCOUNT` is set and `OPENCLAW_HOOKS_TOKEN` is present, startup enables `hooks.presets=["gmail"]`, sets `hooks.gmail.account`, configures the gog serve daemon on `127.0.0.1:8788`, and adds a hooks binding for the `hooks` agent. The gateway auto-starts `gog gmail watch serve` and auto-renews the Gmail Pub/Sub watch subscription.
 
 ### Secret value cookbook
 
@@ -225,6 +231,10 @@ Use these examples when you populate GitHub repository secrets:
 | `BRAVE_API_KEY` | No | `BSA...` | [Brave Search API](https://brave.com/search/api/) | Unset (web search disabled) |
 | `PERPLEXITY_API_KEY` | No | `pplx-...` | [Perplexity API dashboard](https://docs.perplexity.ai) | Unset |
 | `FIRECRAWL_API_KEY` | No | `fc-...` | [Firecrawl dashboard](https://firecrawl.dev) | Unset |
+| `GOG_ACCOUNT` | No (Yes for Gmail) | `user@gmail.com` | Your Gmail address | Unset (Gmail disabled) |
+| `GOG_KEYRING_PASSWORD` | No (Yes for Gmail) | `a3b9f7e2...` (64 hex chars) | `openssl rand -hex 32` — must remain stable across deploys | Unset |
+| `GOG_KEYRING_BACKEND` | No | `file` | Always `file` for Docker (no system keychain) | `file` |
+| `GOG_CONFIG_DIR` | No | `/data/gog` | Override gog config/credential directory | `/data/gog` |
 | `OPENCLAW_CONTROL_UI_ALLOW_INSECURE_AUTH` | No | `false` (recommended) or `true` | Set `true` only when you intentionally want token-only auth without pairing | `false` enforced by workflow when unset |
 
 ## 5) Deploy
@@ -422,6 +432,40 @@ docker exec gordon-matrix npx openclaw channels list
 docker exec gordon-matrix npx openclaw status --deep
 ```
 
+### Gmail not working
+
+- Confirm `GOG_ACCOUNT` and `GOG_KEYRING_PASSWORD` are set in GitHub Secrets (environment secrets under `gordon-matrix`) and redeploy.
+- Confirm `OPENCLAW_HOOKS_TOKEN` is set (Gmail integration requires hooks to be enabled).
+- Confirm the one-time OAuth setup was completed and credentials exist in `/data/gog/` on the VPS:
+
+```bash
+docker exec gordon-matrix ls -la /data/gog/
+docker exec gordon-matrix gog auth list --check
+```
+
+- If `gog auth list --check` shows expired tokens, re-run the OAuth flow (see Gmail setup section below).
+- Confirm the Google Cloud project has the Gmail API enabled and a Pub/Sub topic configured.
+- Check that the gog watch daemon is running:
+
+```bash
+docker exec gordon-matrix ps aux | grep "gog gmail"
+```
+
+- If the daemon is not running, check gateway logs for gog startup errors:
+
+```bash
+docker logs gordon-matrix 2>&1 | grep -i "gog\|gmail"
+```
+
+- Verify webhook delivery works end-to-end:
+
+```bash
+curl -X POST "https://<your-hostname>/hooks/wake" \
+  -H "Authorization: Bearer <OPENCLAW_HOOKS_TOKEN>" \
+  -H "Content-Type: application/json" \
+  -d '{"text":"Gmail integration test","mode":"now"}'
+```
+
 ### Control UI auth issues
 
 - Verify `OPENCLAW_GATEWAY_TOKEN` is set.
@@ -446,7 +490,75 @@ docker exec gordon-matrix rm -f /data/gateway.*.lock
 - Use workflow input `reset_config=true` for one deploy when needed.
 - Subsequent deploys should keep it `false`.
 
-## 9) Agent bootstrap prompts
+## 9) Gmail setup (one-time OAuth)
+
+Gmail integration requires a one-time OAuth credential setup. Tokens are persisted in `/data/gog/` on the VPS volume and survive container rebuilds.
+
+### Prerequisites
+
+1. A Google Cloud project with the **Gmail API** and **Pub/Sub API** enabled.
+2. An **OAuth 2.0 Client ID** (type: "Desktop app") downloaded as `client_secret_*.json` from the Google Cloud Console.
+3. A **Pub/Sub topic** named `gog-gmail-watch` in the same GCP project as the OAuth client.
+
+### Step 1: Store OAuth client credentials in the container
+
+```bash
+# On your local machine — copy to VPS
+scp client_secret_*.json gordon@<VPS_HOST>:/opt/gordon-matrix/data/gog/
+
+# On the VPS — import into gog
+docker exec gordon-matrix gog auth credentials /data/gog/client_secret_*.json
+
+# Clean up the raw file (credentials are now in gog's encrypted keyring)
+rm /opt/gordon-matrix/data/gog/client_secret_*.json
+```
+
+### Step 2: Authorize the Gmail account (headless/remote flow)
+
+Since the VPS has no browser, use gog's remote auth flow:
+
+```bash
+# Step 2a: Generate the auth URL (run on VPS)
+docker exec -it gordon-matrix gog auth add <your-email@gmail.com> \
+  --services gmail \
+  --remote --step 1
+
+# This prints an authorization URL. Open it in your LOCAL browser.
+# Complete the Google OAuth consent flow.
+# Google redirects to a localhost URL — copy the FULL redirect URL.
+
+# Step 2b: Complete auth with the redirect URL (run on VPS)
+docker exec -it gordon-matrix gog auth add <your-email@gmail.com> \
+  --services gmail \
+  --remote --step 2 \
+  --auth-url 'http://127.0.0.1:<port>/oauth2/callback?code=...&state=...'
+```
+
+### Step 3: Verify credentials
+
+```bash
+docker exec gordon-matrix gog auth list --check
+```
+
+Should show your Gmail account with valid tokens.
+
+### Step 4: Set GitHub Secrets and redeploy
+
+Add these environment secrets under the `gordon-matrix` environment:
+
+- `GOG_ACCOUNT` = `your-email@gmail.com`
+- `GOG_KEYRING_PASSWORD` = output of `openssl rand -hex 32` (**must remain the same across all future deploys** — if changed, gog cannot decrypt stored OAuth tokens)
+- `OPENCLAW_HOOKS_TOKEN` (if not already set)
+
+Then trigger a deploy. The gateway will auto-start `gog gmail watch serve`.
+
+### Credential persistence
+
+OAuth tokens are stored encrypted in `/data/gog/` which maps to `/opt/gordon-matrix/data/gog/` on the VPS host. This directory is part of the `/data` volume and survives container rebuilds. The tokens are encrypted with `GOG_KEYRING_PASSWORD`.
+
+**Backup note**: The `/opt/gordon-matrix/data/` backup (section 8 of VPS setup) already covers the gog credential directory. If restoring from backup, ensure `GOG_KEYRING_PASSWORD` matches the password used when the backup was created.
+
+## 10) Agent bootstrap prompts
 
 When first opening an in-container agent session, useful prompts are:
 

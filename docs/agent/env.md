@@ -14,3 +14,7 @@
 - `OPENCLAW_HOOKS_PATH` (default: `/hooks`)
 - `OPENCLAW_HOOKS_ALLOWED_AGENT_IDS` (comma-separated allowlist; default: `*`)
 - `TELEGRAM_BOT_TOKEN` (when set, enables Telegram channel auto-wiring at startup)
+- `GOG_ACCOUNT` (when set, enables Gmail auto-wiring at startup via hooks.gmail)
+- `GOG_KEYRING_PASSWORD` (encrypts file-based keyring for OAuth token storage)
+- `GOG_KEYRING_BACKEND` (default: `file` — required for headless Docker)
+- `GOG_CONFIG_DIR` (default: `/data/gog` — persists credentials across rebuilds)

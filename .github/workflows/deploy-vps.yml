@@ -72,6 +72,10 @@ jobs:
           export BRAVE_API_KEY="${BRAVE_API_KEY}"
           export PERPLEXITY_API_KEY="${PERPLEXITY_API_KEY}"
           export FIRECRAWL_API_KEY="${FIRECRAWL_API_KEY}"
+          export GOG_ACCOUNT="${GOG_ACCOUNT}"
+          export GOG_KEYRING_PASSWORD="${GOG_KEYRING_PASSWORD}"
+          export GOG_KEYRING_BACKEND="${GOG_KEYRING_BACKEND}"
+          export GOG_CONFIG_DIR="${GOG_CONFIG_DIR}"
           export OPENCLAW_CONTROL_UI_ALLOW_INSECURE_AUTH="${OPENCLAW_CONTROL_UI_ALLOW_INSECURE_AUTH}"
           export RESET_CONFIG="${RESET_CONFIG}"
           export OPENCLAW_VERSION="${OPENCLAW_VERSION}"
@@ -104,6 +108,10 @@ jobs:
           BRAVE_API_KEY: ${{ secrets.BRAVE_API_KEY }}
           PERPLEXITY_API_KEY: ${{ secrets.PERPLEXITY_API_KEY }}
           FIRECRAWL_API_KEY: ${{ secrets.FIRECRAWL_API_KEY }}
+          GOG_ACCOUNT: ${{ secrets.GOG_ACCOUNT }}
+          GOG_KEYRING_PASSWORD: ${{ secrets.GOG_KEYRING_PASSWORD }}
+          GOG_KEYRING_BACKEND: ${{ secrets.GOG_KEYRING_BACKEND }}
+          GOG_CONFIG_DIR: ${{ secrets.GOG_CONFIG_DIR }}
           OPENCLAW_CONTROL_UI_ALLOW_INSECURE_AUTH: ${{ secrets.OPENCLAW_CONTROL_UI_ALLOW_INSECURE_AUTH || 'false' }}
           RESET_CONFIG: ${{ inputs.reset_config || 'false' }}
           OPENCLAW_VERSION: ${{ inputs.openclaw_version || 'main' }}
@@ -120,6 +128,13 @@ jobs:
           else
             echo "::notice::Web search disabled (no BRAVE_API_KEY or PERPLEXITY_API_KEY)"
           fi
+          if [ -n "${GOG_ACCOUNT}" ] && [ -z "${GOG_KEYRING_PASSWORD}" ]; then
+            echo "::warning::Gmail: GOG_ACCOUNT set but GOG_KEYRING_PASSWORD missing"
+          fi
+          if [ -n "${GOG_ACCOUNT}" ] && [ -z "${OPENCLAW_HOOKS_TOKEN}" ]; then
+            echo "::warning::Gmail: GOG_ACCOUNT set but OPENCLAW_HOOKS_TOKEN missing (hooks required)"
+          fi
+          [ -n "${GOG_ACCOUNT}" ] && echo "::notice::Gmail auto-wiring enabled for ${GOG_ACCOUNT}" || true
         env:
           OPENCLAW_HOOKS_TOKEN: ${{ secrets.OPENCLAW_HOOKS_TOKEN }}
           DISCORD_BOT_TOKEN: ${{ secrets.DISCORD_BOT_TOKEN }}
@@ -127,3 +142,5 @@ jobs:
           TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
           BRAVE_API_KEY: ${{ secrets.BRAVE_API_KEY }}
           PERPLEXITY_API_KEY: ${{ secrets.PERPLEXITY_API_KEY }}
+          GOG_ACCOUNT: ${{ secrets.GOG_ACCOUNT }}
+          GOG_KEYRING_PASSWORD: ${{ secrets.GOG_KEYRING_PASSWORD }}

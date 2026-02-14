@@ -19,6 +19,14 @@ RUN apt-get update && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/* /var/cache/apt/archives/*
 
+# Install gog (Google Suite CLI) — pinned version for reproducible builds.
+ARG GOG_VERSION=0.10.0
+RUN ARCH="$(dpkg --print-architecture)" && \
+    curl -fsSL "https://github.com/steipete/gogcli/releases/download/v${GOG_VERSION}/gogcli_${GOG_VERSION}_linux_${ARCH}.tar.gz" \
+      | tar -xz -C /usr/local/bin gog && \
+    chmod +x /usr/local/bin/gog && \
+    gog --version
+
 WORKDIR /app
 
 # Fetch OpenClaw sources from a single explicit ref.
