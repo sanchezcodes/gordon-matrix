@@ -94,7 +94,7 @@ const providerDefaults = [
     provider: "openai",
     envVar: "OPENAI_API_KEY",
     profileKey: "openai:default",
-    primaryModel: "openai/gpt-5.2",
+    primaryModel: "openai/gpt-5.3",
     fallbackModels: ["openai/gpt-4o"],
   },
   {
@@ -452,6 +452,16 @@ if (telegramBotToken) {
   // bot token alone is enough for a working default integration.
   // Telegram is a built-in channel, NOT a plugin — do not add plugins.entries.telegram
   // (the gateway would override it to enabled=false and block the channel).
+
+  // Clean up stale plugin entry from previous deployments (commits before 544328c).
+  const pluginsForTelegram = ensureObject(config, "plugins");
+  const pluginEntriesForTelegram = ensureObject(pluginsForTelegram, "entries");
+  if (Object.prototype.hasOwnProperty.call(pluginEntriesForTelegram, "telegram")) {
+    delete pluginEntriesForTelegram.telegram;
+    console.log("Removed stale plugins.entries.telegram (Telegram is a built-in channel)");
+    changed = true;
+  }
+
   const bindings = ensureArray(config, "bindings");
   const hasTelegramBinding = bindings.some(
     (binding) =>
@@ -500,9 +510,24 @@ if (telegramBotToken) {
     console.log("Set channels.telegram.groups.*.requireMention=false");
     changed = true;
   }
-} else if (Object.prototype.hasOwnProperty.call(process.env, "TELEGRAM_BOT_TOKEN")) {
-  // Env var is explicitly set but empty/blank — keep non-fatal for deploy continuity.
-  console.log("Skipping Telegram auto-wiring: TELEGRAM_BOT_TOKEN is set but empty.");
+} else {
+  // Token absent or empty — disable Telegram channel if it was previously auto-wired.
+  const channels = config.channels;
+  if (channels && channels.telegram && channels.telegram.enabled === true) {
+    channels.telegram.enabled = false;
+    console.log("Set channels.telegram.enabled=false (token removed)");
+    changed = true;
+  }
+  // Clean up stale plugin entry unconditionally.
+  const plugins = config.plugins;
+  if (plugins && plugins.entries && Object.prototype.hasOwnProperty.call(plugins.entries, "telegram")) {
+    delete plugins.entries.telegram;
+    console.log("Removed stale plugins.entries.telegram");
+    changed = true;
+  }
+  if (Object.prototype.hasOwnProperty.call(process.env, "TELEGRAM_BOT_TOKEN")) {
+    console.log("Skipping Telegram auto-wiring: TELEGRAM_BOT_TOKEN is set but empty.");
+  }
 }
 
 if (changed) {

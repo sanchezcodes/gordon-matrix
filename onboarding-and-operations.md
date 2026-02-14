@@ -405,6 +405,7 @@ docker exec gordon-matrix npx openclaw status
 - Confirm `/data/openclaw.json` includes the auto-configured Telegram channel entries after startup.
 - Check that no other bot instance is polling with the same token (Telegram allows only one long-poll consumer per token).
 - If the bot is in a group, ensure it was added as a member and has message read permissions (disable "Group Privacy" in @BotFather settings if needed).
+- If this VPS previously deployed before the Telegram plugin-entry fix (commit `544328c`), the stale `plugins.entries.telegram` in `/data/openclaw.json` may be blocking the channel. The sync script now cleans this automatically, but you can also run a one-time deploy with `reset_config=true` to force a fresh config.
 - Verify gateway reachability:
 
 ```bash

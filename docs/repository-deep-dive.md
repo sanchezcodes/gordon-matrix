@@ -58,17 +58,19 @@ The most substantial custom code. It's an **idempotent, additive** config reconc
 - **Model selection**: Picks primary model based on available keys (OpenAI > Anthropic > Google priority)
 - **Fallback chain**: Builds fallback models from all available providers
 - **Discord auto-wiring**: If `DISCORD_BOT_TOKEN` + `DISCORD_GUILD_ID` are set → enables plugin, creates binding, configures channels
+- **Telegram auto-wiring**: If `TELEGRAM_BOT_TOKEN` is set → enables built-in channel, creates binding, sets DM/group policies
 - **Webhook auto-enablement**: If `OPENCLAW_HOOKS_TOKEN` is set → enables `/hooks` endpoints
 - **Safety**: Disables features if tokens are removed (safe-by-default)
 - **Agent management**: Ensures `main` and `hooks` agents always exist
 
 ### 4. `default-config.json` — Config Template
 ```
-Primary model:   openai/gpt-5.2
+Primary model:   openai/gpt-5.3
 Fallbacks:       claude-opus-4-5, claude-sonnet-4-5, gpt-4o
 Agents:          "main" (default), "hooks" (for webhooks)
 Gateway:         port 3000, local mode
 Hooks:           disabled by default
+Channels:        none in template (Discord & Telegram auto-wired from env vars at startup)
 Max concurrent:  4 agent runs
 Workspace:       /data/workspace
 ```
@@ -128,6 +130,7 @@ Triggers on push to `main` or manual dispatch. Steps:
 | **Anthropic** | `ANTHROPIC_API_KEY` | Claude Opus 4.5, Claude Sonnet 4.5 |
 | **Google** | `GEMINI_API_KEY` | Gemini 3 Pro Preview |
 | **Discord** | `DISCORD_BOT_TOKEN` + `DISCORD_GUILD_ID` | Bot in Discord server channels |
+| **Telegram** | `TELEGRAM_BOT_TOKEN` | Bot in Telegram DMs and groups |
 | **Webhooks** | `OPENCLAW_HOOKS_TOKEN` | `/hooks/agent` and `/hooks/wake` endpoints |
 | **Cloudflare** | `CLOUDFLARE_TUNNEL_TOKEN` | Secure tunnel ingress |
 | **Control UI** | `OPENCLAW_GATEWAY_TOKEN` | Web-based management interface |
@@ -141,6 +144,7 @@ graph TB
     subgraph "External Users & Services"
         User["User / Browser"]
         Discord["Discord Server"]
+        Telegram["Telegram"]
         ExtSvc["External Service<br/>(Webhooks)"]
     end
 
@@ -169,7 +173,7 @@ graph TB
             subgraph "OpenClaw Gateway :3000"
                 AgentEngine["Agent Engine<br/>(main + hooks agents)"]
                 LLMRouter["LLM Router<br/>(Primary + Fallbacks)"]
-                ChannelMgr["Channel Manager<br/>(Discord, Webhooks, UI)"]
+                ChannelMgr["Channel Manager<br/>(Discord, Telegram, Webhooks, UI)"]
                 SessionMgr["Session Manager"]
                 PluginSys["Plugin System<br/>(Discord Plugin)"]
                 ControlUI["Control UI<br/>(Web Interface)"]
@@ -210,6 +214,7 @@ graph TB
     User -->|"HTTPS"| CFAccess
     ExtSvc -->|"POST /hooks/*"| CFAccess
     Discord -->|"Bot API"| PluginSys
+    Telegram -->|"Bot API (polling)"| ChannelMgr
     CFAccess -->|"Authenticated"| CFTunnel
     CFTunnel <-->|"Outbound tunnel"| CloudflaredBg
     CloudflaredBg -->|"localhost:3000"| ControlUI
@@ -235,7 +240,7 @@ graph TB
     classDef ai fill:#fbb,stroke:#333,stroke-width:2px
     classDef host fill:#dfd,stroke:#333,stroke-width:2px
 
-    class User,Discord,ExtSvc external
+    class User,Discord,Telegram,ExtSvc external
     class CFAccess,CFTunnel cloud
     class Entrypoint,CloudflaredBg,SyncScript,AgentEngine,LLMRouter,ChannelMgr,SessionMgr,PluginSys,ControlUI,HooksAPI infra
     class Config,Creds,Sessions,Workspace storage
@@ -274,6 +279,7 @@ sequenceDiagram
     Sync->>Sync: Detect available providers (API keys)
     Sync->>Sync: Select primary model + fallbacks
     Sync->>Sync: Auto-wire Discord (if tokens present)
+    Sync->>Sync: Auto-wire Telegram (if token present)
     Sync->>Sync: Enable webhooks (if token present)
     Sync->>Sync: Ensure agents exist (main, hooks)
     Sync-->>EP: Config written to /data/openclaw.json
@@ -291,6 +297,7 @@ sequenceDiagram
 flowchart LR
     subgraph Input Channels
         A[Discord Message]
+        A2[Telegram Message]
         B[Webhook POST]
         C[Control UI]
     end
@@ -309,6 +316,7 @@ flowchart LR
     end
 
     A --> D
+    A2 --> D
     B --> D
     C --> D
     D --> E
@@ -321,6 +329,7 @@ flowchart LR
     I -->|"Response"| D
     J -->|"Response"| D
     D -->|"Reply"| A
+    D -->|"Reply"| A2
     D -->|"Reply"| B
     D -->|"Reply"| C
 ```
