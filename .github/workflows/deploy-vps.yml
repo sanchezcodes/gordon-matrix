@@ -38,7 +38,7 @@ jobs:
           [ -n "${VPS_HOST}" ] || { echo "Missing: VPS_HOST"; exit 1; }
           [ -n "${VPS_SSH_KEY}" ] || { echo "Missing: VPS_SSH_KEY"; exit 1; }
           [ -n "${VPS_SSH_KNOWN_HOSTS}" ] || { echo "Missing: VPS_SSH_KNOWN_HOSTS"; exit 1; }
-          if [ -z "${ANTHROPIC_API_KEY}" ] && [ -z "${OPENAI_API_KEY}" ] && [ -z "${GEMINI_API_KEY}" ]; then
+          if [ -z "${ANTHROPIC_API_KEY}" ] && [ -z "${OPENAI_API_KEY}" ] && [ -z "${GEMINI_API_KEY}" ] && [ -z "${GROQ_API_KEY}" ] && [ -z "${OPENROUTER_API_KEY}" ]; then
             echo "Set at least one provider key"; exit 1
           fi
         env:
@@ -50,6 +50,8 @@ jobs:
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
+          OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
 
       - name: Deploy via SSH
         run: |
@@ -67,6 +69,8 @@ jobs:
           export OPENAI_API_KEY="${OPENAI_API_KEY}"
           export ANTHROPIC_API_KEY="${ANTHROPIC_API_KEY}"
           export GEMINI_API_KEY="${GEMINI_API_KEY}"
+          export GROQ_API_KEY="${GROQ_API_KEY}"
+          export OPENROUTER_API_KEY="${OPENROUTER_API_KEY}"
           export OPENCLAW_HOOKS_TOKEN="${OPENCLAW_HOOKS_TOKEN}"
           export OPENCLAW_HOOKS_PATH="${OPENCLAW_HOOKS_PATH}"
           export OPENCLAW_HOOKS_ALLOWED_AGENT_IDS="${OPENCLAW_HOOKS_ALLOWED_AGENT_IDS}"
@@ -104,6 +108,8 @@ jobs:
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
+          OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
           OPENCLAW_HOOKS_TOKEN: ${{ secrets.OPENCLAW_HOOKS_TOKEN }}
           OPENCLAW_HOOKS_PATH: ${{ secrets.OPENCLAW_HOOKS_PATH }}
           OPENCLAW_HOOKS_ALLOWED_AGENT_IDS: ${{ secrets.OPENCLAW_HOOKS_ALLOWED_AGENT_IDS }}
@@ -142,6 +148,8 @@ jobs:
             echo "::warning::Gmail: GOG_ACCOUNT set but OPENCLAW_HOOKS_TOKEN missing (hooks required)"
           fi
           [ -n "${GOG_ACCOUNT}" ] && echo "::notice::Gmail auto-wiring enabled for ${GOG_ACCOUNT}" || true
+          [ -n "${GROQ_API_KEY}" ] && echo "::notice::Groq provider enabled (heartbeat tier)" || echo "::notice::Groq disabled (GROQ_API_KEY not set)"
+          [ -n "${OPENROUTER_API_KEY}" ] && echo "::notice::OpenRouter provider enabled (subagent tier)" || echo "::notice::OpenRouter disabled (OPENROUTER_API_KEY not set)"
         env:
           OPENCLAW_HOOKS_TOKEN: ${{ secrets.OPENCLAW_HOOKS_TOKEN }}
           DISCORD_BOT_TOKEN: ${{ secrets.DISCORD_BOT_TOKEN }}
@@ -151,3 +159,5 @@ jobs:
           PERPLEXITY_API_KEY: ${{ secrets.PERPLEXITY_API_KEY }}
           GOG_ACCOUNT: ${{ secrets.GOG_ACCOUNT }}
           GOG_KEYRING_PASSWORD: ${{ secrets.GOG_KEYRING_PASSWORD }}
+          GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
+          OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}

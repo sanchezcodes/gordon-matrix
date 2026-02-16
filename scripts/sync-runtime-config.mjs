@@ -111,6 +111,20 @@ const providerDefaults = [
     primaryModel: "google/gemini-3-pro-preview",
     fallbackModels: [],
   },
+  {
+    provider: "groq",
+    envVar: "GROQ_API_KEY",
+    profileKey: "groq:default",
+    primaryModel: "groq/llama-3.1-8b-instant",
+    fallbackModels: ["groq/llama-4-scout-17b-16e-instruct"],
+  },
+  {
+    provider: "openrouter",
+    envVar: "OPENROUTER_API_KEY",
+    profileKey: "openrouter:default",
+    primaryModel: "openrouter/deepseek/deepseek-chat",
+    fallbackModels: ["openrouter/google/gemini-3-flash"],
+  },
 ];
 const providerDefaultsByName = new Map(providerDefaults.map((entry) => [entry.provider, entry]));
 
@@ -361,6 +375,134 @@ if (availableProviders.length > 0) {
     modelDefaults.fallbacks = desiredFallbacks;
     changed = true;
     console.log(`Set agents.defaults.model.fallbacks=${JSON.stringify(desiredFallbacks)}`);
+  }
+}
+
+// ── OpenRouter custom provider ───────────────────────────────────
+// OpenRouter requires a custom baseUrl in models.providers because
+// its API endpoint differs from the standard OpenAI endpoint.
+const openrouterApiKey = trimValue(process.env.OPENROUTER_API_KEY);
+if (openrouterApiKey) {
+  const modelsConfig = ensureObject(config, "models");
+  const providers = ensureObject(modelsConfig, "providers");
+  const orProvider = ensureObject(providers, "openrouter");
+
+  let orChanged = false;
+  if (orProvider.baseUrl !== "https://openrouter.ai/api/v1") {
+    orProvider.baseUrl = "https://openrouter.ai/api/v1";
+    orChanged = true;
+  }
+  if (orProvider.api !== "openai-completions") {
+    orProvider.api = "openai-completions";
+    orChanged = true;
+  }
+  if (orChanged) {
+    console.log("Set models.providers.openrouter (baseUrl=https://openrouter.ai/api/v1)");
+    changed = true;
+  }
+} else {
+  // Clean up OpenRouter provider config if key was removed.
+  const modelsConfig = config.models;
+  if (
+    modelsConfig &&
+    typeof modelsConfig === "object" &&
+    modelsConfig.providers &&
+    typeof modelsConfig.providers === "object" &&
+    Object.prototype.hasOwnProperty.call(modelsConfig.providers, "openrouter")
+  ) {
+    delete modelsConfig.providers.openrouter;
+    console.log("Removed models.providers.openrouter (OPENROUTER_API_KEY removed)");
+    changed = true;
+  }
+}
+
+// ── Tiered model routing ─────────────────────────────────────────
+// Assign cheap/mid-tier models to heartbeat, subagents, and imageModel
+// based on available providers. Only set when the relevant providers
+// are available; the gateway falls back to the primary model otherwise.
+if (availableProviders.length > 0) {
+  const hasGroq = availableProviders.includes("groq");
+  const hasOpenRouter = availableProviders.includes("openrouter");
+  const hasGoogle = availableProviders.includes("google");
+
+  // --- Heartbeat model (cheapest possible) ---
+  {
+    const heartbeat = ensureObject(defaults, "heartbeat");
+    let desired = null;
+
+    if (hasGroq) {
+      desired = "groq/llama-3.1-8b-instant"; // $0.05/$0.08 per M
+    } else if (hasOpenRouter) {
+      desired = "openrouter/deepseek/deepseek-chat"; // $0.25/$0.38 per M
+    } else if (hasGoogle) {
+      desired = "google/gemini-3-pro-preview";
+    } else if (availableProviders.includes("openai")) {
+      desired = "openai/gpt-4o";
+    }
+
+    if (desired && heartbeat.model !== desired) {
+      heartbeat.model = desired;
+      console.log(`Set agents.defaults.heartbeat.model=${desired}`);
+      changed = true;
+    }
+  }
+
+  // --- Subagent model (mid-tier: good enough for tool-use, cheaper than frontier) ---
+  {
+    const subagents = ensureObject(defaults, "subagents");
+    let desired = null;
+
+    if (hasOpenRouter) {
+      desired = "openrouter/deepseek/deepseek-chat"; // $0.25/$0.38 per M
+    } else if (hasGroq) {
+      desired = "groq/llama-3.3-70b-versatile"; // $0.59/$0.79 per M
+    } else if (hasGoogle) {
+      desired = "google/gemini-3-pro-preview";
+    } else if (availableProviders.includes("anthropic")) {
+      desired = "anthropic/claude-sonnet-4-5";
+    }
+
+    if (desired && subagents.model !== desired) {
+      subagents.model = desired;
+      console.log(`Set agents.defaults.subagents.model=${desired}`);
+      changed = true;
+    }
+  }
+
+  // --- Image model (Nano Banana for generation, vision handled by primary) ---
+  {
+    const imageModel = ensureObject(defaults, "imageModel");
+    let desiredPrimary = null;
+    const desiredFallbacks = [];
+
+    // Google Nano Banana (gemini-2.5-flash-image) for image generation.
+    if (hasGoogle) {
+      desiredPrimary = "google/gemini-2.5-flash-image"; // ~$0.039/image
+    }
+    // Fallback to models with strong vision capabilities.
+    if (availableProviders.includes("openai")) {
+      const model = "openai/gpt-5.2";
+      if (model !== desiredPrimary) {
+        desiredFallbacks.push(model);
+      }
+    }
+    if (availableProviders.includes("anthropic")) {
+      desiredFallbacks.push("anthropic/claude-sonnet-4-5");
+    }
+
+    if (desiredPrimary && imageModel.primary !== desiredPrimary) {
+      imageModel.primary = desiredPrimary;
+      console.log(`Set agents.defaults.imageModel.primary=${desiredPrimary}`);
+      changed = true;
+    }
+    if (desiredFallbacks.length > 0) {
+      const existing = Array.isArray(imageModel.fallbacks) ? imageModel.fallbacks : [];
+      if (!arraysEqual(existing, desiredFallbacks)) {
+        imageModel.fallbacks = desiredFallbacks;
+        console.log(`Set agents.defaults.imageModel.fallbacks=${JSON.stringify(desiredFallbacks)}`);
+        changed = true;
+      }
+    }
   }
 }
 

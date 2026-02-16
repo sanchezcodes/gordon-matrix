@@ -9,6 +9,16 @@
           "openai/gpt-4o"
         ]
       },
+      "heartbeat": {
+        "model": "openai/gpt-4o"
+      },
+      "subagents": {
+        "model": "openai/gpt-4o"
+      },
+      "imageModel": {
+        "primary": "openai/gpt-5.2",
+        "fallbacks": ["anthropic/claude-sonnet-4-5"]
+      },
       "maxConcurrent": 4,
       "workspace": "/data/workspace",
       "sandbox": {
@@ -58,6 +68,9 @@
       }
     }
   },
+  "models": {
+    "providers": {}
+  },
   "plugins": {},
   "discovery": {},
   "logging": {
@@ -65,6 +78,8 @@
     "redactPatterns": [
       "sk-ant-api03-[A-Za-z0-9_-]+",
       "sk-[A-Za-z0-9]+",
+      "sk-or-v1-[A-Za-z0-9]+",
+      "gsk_[A-Za-z0-9]+",
       "\\b[0-9]{10,}:[A-Za-z0-9_-]+\\b"
     ]
   },
