@@ -1,3 +1,12 @@
+# ── Stage 1: Compilar gog (gogcli) desde source ─────────────────────
+FROM golang:1.22-bookworm AS gog_builder
+ARG GOG_VERSION=0.11.0
+RUN git clone --branch "v${GOG_VERSION}" --depth 1 \
+      https://github.com/steipete/gogcli.git /src/gogcli
+WORKDIR /src/gogcli
+RUN go build -trimpath -ldflags="-s -w" -o /out/gog ./cmd/gog
+
+# ── Stage 2: Runtime ─────────────────────────────────────────────────
 FROM node:22-bookworm
 
 # Install Bun (required for build scripts) — pinned version to mitigate supply-chain risk
@@ -19,13 +28,9 @@ RUN apt-get update && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/* /var/cache/apt/archives/*
 
-# Install gog (Google Suite CLI) — pinned version for reproducible builds.
-ARG GOG_VERSION=0.10.0
-RUN ARCH="$(dpkg --print-architecture)" && \
-    curl -fsSL "https://github.com/steipete/gogcli/releases/download/v${GOG_VERSION}/gogcli_${GOG_VERSION}_linux_${ARCH}.tar.gz" \
-      | tar -xz -C /usr/local/bin gog && \
-    chmod +x /usr/local/bin/gog && \
-    gog --version
+# Copy gog binary from builder stage (Go toolchain stays out of runtime).
+COPY --from=gog_builder /out/gog /usr/local/bin/gog
+RUN gog --version
 
 WORKDIR /app
 

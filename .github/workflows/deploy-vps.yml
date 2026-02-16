@@ -6,15 +6,20 @@ on:
   workflow_dispatch:
     inputs:
       reset_config:
-        description: "Reset config to default"
+        description: 'Reset config to default'
         required: false
         type: boolean
         default: false
       openclaw_version:
-        description: "OpenClaw version (main, tag, or commit SHA)"
+        description: 'OpenClaw version (main, tag, or commit SHA)'
         required: false
         type: string
-        default: "main"
+        default: 'main'
+      gog_version:
+        description: 'GOG CLI version (tag sin prefijo v, ej. 0.11.0)'
+        required: false
+        type: string
+        default: '0.11.0'
 
 jobs:
   deploy:
@@ -79,6 +84,7 @@ jobs:
           export OPENCLAW_CONTROL_UI_ALLOW_INSECURE_AUTH="${OPENCLAW_CONTROL_UI_ALLOW_INSECURE_AUTH}"
           export RESET_CONFIG="${RESET_CONFIG}"
           export OPENCLAW_VERSION="${OPENCLAW_VERSION}"
+          export GOG_VERSION="${GOG_VERSION}"
           export NODE_OPTIONS="--max-old-space-size=4096"
 
           cd /opt/gordon-matrix/app
@@ -115,6 +121,7 @@ jobs:
           OPENCLAW_CONTROL_UI_ALLOW_INSECURE_AUTH: ${{ secrets.OPENCLAW_CONTROL_UI_ALLOW_INSECURE_AUTH || 'false' }}
           RESET_CONFIG: ${{ inputs.reset_config || 'false' }}
           OPENCLAW_VERSION: ${{ inputs.openclaw_version || 'main' }}
+          GOG_VERSION: ${{ inputs.gog_version || '0.11.0' }}
 
       - name: Log warnings
         run: |

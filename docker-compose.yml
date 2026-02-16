@@ -5,6 +5,7 @@ services:
       dockerfile: Dockerfile
       args:
         OPENCLAW_VERSION: ${OPENCLAW_VERSION:-main}
+        GOG_VERSION: ${GOG_VERSION:-0.11.0}
     container_name: gordon-matrix
     restart: unless-stopped
     environment:
