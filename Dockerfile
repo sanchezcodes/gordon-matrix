@@ -1,5 +1,5 @@
 # ── Stage 1: Compilar gog (gogcli) desde source ─────────────────────
-FROM golang:1.22-bookworm AS gog_builder
+FROM golang:1.25-bookworm AS gog_builder
 ARG GOG_VERSION=0.11.0
 RUN git clone --branch "v${GOG_VERSION}" --depth 1 \
       https://github.com/steipete/gogcli.git /src/gogcli
