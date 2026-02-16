@@ -61,10 +61,16 @@ mkdir -p "$CONFIG_DIR" "$CREDENTIALS_DIR" "$SESSIONS_DIR"
 chmod 700 "$CONFIG_DIR" "$CREDENTIALS_DIR" || true
 
 # gog credential store — persist OAuth tokens for Gmail integration.
+# gogcli uses XDG standard: ~/.config/gogcli/. We symlink it to /data/gog/
+# so credentials survive container rebuilds (GOG_CONFIG_DIR is NOT a real
+# gogcli variable — it only controls which path we use for the persistent dir).
 GOG_DIR="${GOG_CONFIG_DIR:-$CONFIG_DIR/gog}"
 if [ -n "${GOG_ACCOUNT:-}" ]; then
   mkdir -p "$GOG_DIR"
   chmod 700 "$GOG_DIR" || true
+  # Symlink gogcli's XDG config path to the persistent volume.
+  mkdir -p "$HOME/.config"
+  ln -sfn "$GOG_DIR" "$HOME/.config/gogcli"
   export GOG_CONFIG_DIR="$GOG_DIR"
   export GOG_KEYRING_BACKEND="${GOG_KEYRING_BACKEND:-file}"
 fi
