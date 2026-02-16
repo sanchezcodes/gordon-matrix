@@ -52,11 +52,16 @@ Runs on every container start:
 7. Runs `sync-runtime-config.mjs` to reconcile env vars into config
 8. Hands off to the OpenClaw gateway process
 
-### 3. `scripts/sync-runtime-config.mjs` — The Brain (15.6 KB)
+### 3. `scripts/sync-runtime-config.mjs` — The Brain
 The most substantial custom code. It's an **idempotent, additive** config reconciler:
-- **Provider detection**: Scans for `OPENAI_API_KEY`, `ANTHROPIC_API_KEY`, `GEMINI_API_KEY`
+- **Provider detection**: Scans for `OPENAI_API_KEY`, `ANTHROPIC_API_KEY`, `GEMINI_API_KEY`, `GROQ_API_KEY`, `OPENROUTER_API_KEY`
 - **Model selection**: Picks primary model based on available keys (OpenAI > Anthropic > Google priority)
-- **Fallback chain**: Builds fallback models from all available providers
+- **Fallback chain**: Builds fallback models from all available providers (including Groq and OpenRouter models)
+- **Tiered model routing**: Assigns cost-optimized models per task type:
+  - **Heartbeat**: Groq > OpenRouter > Google > OpenAI (cheapest first)
+  - **Sub-agents**: OpenRouter > Groq > Google > Anthropic (mid-tier)
+  - **Image model**: Google Nano Banana primary, with OpenAI/Anthropic vision fallbacks
+- **Custom provider registration**: Configures OpenRouter's `baseUrl` and API type in `models.providers`
 - **Discord auto-wiring**: If `DISCORD_BOT_TOKEN` + `DISCORD_GUILD_ID` are set → enables plugin, creates binding, configures channels
 - **Telegram auto-wiring**: If `TELEGRAM_BOT_TOKEN` is set → enables built-in channel, creates binding, sets DM/group policies
 - **Webhook auto-enablement**: If `OPENCLAW_HOOKS_TOKEN` is set → enables `/hooks` endpoints
@@ -65,8 +70,11 @@ The most substantial custom code. It's an **idempotent, additive** config reconc
 
 ### 4. `default-config.json` — Config Template
 ```
-Primary model:   openai/gpt-5.3
+Primary model:   openai/gpt-5.2
 Fallbacks:       claude-opus-4-5, claude-sonnet-4-5, gpt-4o
+Heartbeat:       openai/gpt-4o (overridden at runtime by sync script → groq/llama-3.1-8b-instant)
+Sub-agents:      openai/gpt-4o (overridden at runtime by sync script → openrouter/deepseek/deepseek-chat)
+Image model:     openai/gpt-5.2 (overridden at runtime by sync script → google/gemini-2.5-flash-image)
 Agents:          "main" (default), "hooks" (for webhooks)
 Gateway:         port 3000, local mode
 Hooks:           disabled by default
@@ -128,7 +136,9 @@ Triggers on push to `main` or manual dispatch. Steps:
 |-------------|-------------------|--------------|
 | **OpenAI** | `OPENAI_API_KEY` | GPT-5.2 (primary), GPT-4o (fallback) |
 | **Anthropic** | `ANTHROPIC_API_KEY` | Claude Opus 4.5, Claude Sonnet 4.5 |
-| **Google** | `GEMINI_API_KEY` | Gemini 3 Pro Preview |
+| **Google** | `GEMINI_API_KEY` | Gemini 3 Pro Preview, Nano Banana image gen |
+| **Groq** | `GROQ_API_KEY` | Llama 3.1 8B (heartbeat tier, ultra-cheap) |
+| **OpenRouter** | `OPENROUTER_API_KEY` | DeepSeek V3 (sub-agent tier), 300+ models |
 | **Discord** | `DISCORD_BOT_TOKEN` + `DISCORD_GUILD_ID` | Bot in Discord server channels |
 | **Telegram** | `TELEGRAM_BOT_TOKEN` | Bot in Telegram DMs and groups |
 | **Webhooks** | `OPENCLAW_HOOKS_TOKEN` | `/hooks/agent` and `/hooks/wake` endpoints |
@@ -192,7 +202,9 @@ graph TB
     subgraph "AI Model Providers"
         OpenAI["OpenAI API<br/>gpt-5.2 / gpt-4o"]
         Anthropic["Anthropic API<br/>claude-opus-4-5<br/>claude-sonnet-4-5"]
-        Google["Google AI API<br/>gemini-3-pro-preview"]
+        Google["Google AI API<br/>gemini-3-pro / nano-banana"]
+        Groq["Groq LPU<br/>llama-3.1-8b (heartbeat)"]
+        OpenRouter["OpenRouter<br/>deepseek-chat (sub-agents)"]
     end
 
     %% Deployment flow
@@ -231,6 +243,8 @@ graph TB
     LLMRouter -->|"Primary"| OpenAI
     LLMRouter -->|"Fallback 1"| Anthropic
     LLMRouter -->|"Fallback 2"| Google
+    LLMRouter -->|"Heartbeat"| Groq
+    LLMRouter -->|"Sub-agents"| OpenRouter
 
     %% Styling
     classDef external fill:#f9f,stroke:#333,stroke-width:2px
@@ -244,7 +258,7 @@ graph TB
     class CFAccess,CFTunnel cloud
     class Entrypoint,CloudflaredBg,SyncScript,AgentEngine,LLMRouter,ChannelMgr,SessionMgr,PluginSys,ControlUI,HooksAPI infra
     class Config,Creds,Sessions,Workspace storage
-    class OpenAI,Anthropic,Google ai
+    class OpenAI,Anthropic,Google,Groq,OpenRouter ai
     class SystemdSvc,BackupCron host
 ```
 
@@ -278,6 +292,8 @@ sequenceDiagram
     EP->>Sync: node sync-runtime-config.mjs
     Sync->>Sync: Detect available providers (API keys)
     Sync->>Sync: Select primary model + fallbacks
+    Sync->>Sync: Register custom providers (OpenRouter baseUrl)
+    Sync->>Sync: Tiered routing (heartbeat→Groq, subagents→OpenRouter, images→Google)
     Sync->>Sync: Auto-wire Discord (if tokens present)
     Sync->>Sync: Auto-wire Telegram (if token present)
     Sync->>Sync: Enable webhooks (if token present)
@@ -313,6 +329,8 @@ flowchart LR
         H[OpenAI gpt-5.2]
         I[Anthropic claude-opus-4-5]
         J[Google gemini-3-pro]
+        K[Groq llama-3.1-8b]
+        L[OpenRouter deepseek-chat]
     end
 
     A --> D
@@ -325,9 +343,13 @@ flowchart LR
     G -->|"Primary"| H
     G -->|"Fallback 1"| I
     G -->|"Fallback 2"| J
+    G -->|"Heartbeat"| K
+    G -->|"Sub-agents"| L
     H -->|"Response"| D
     I -->|"Response"| D
     J -->|"Response"| D
+    K -->|"Response"| D
+    L -->|"Response"| D
     D -->|"Reply"| A
     D -->|"Reply"| A2
     D -->|"Reply"| B

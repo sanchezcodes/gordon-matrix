@@ -13,6 +13,8 @@
 - `OPENCLAW_HOOKS_TOKEN` (when set, enables top-level `hooks` config at startup)
 - `OPENCLAW_HOOKS_PATH` (default: `/hooks`)
 - `OPENCLAW_HOOKS_ALLOWED_AGENT_IDS` (comma-separated allowlist; default: `*`)
+- `GROQ_API_KEY` (when set, enables Groq as heartbeat-tier provider — ultra-cheap LPU inference)
+- `OPENROUTER_API_KEY` (when set, enables OpenRouter as sub-agent-tier provider + registers custom baseUrl in `models.providers`)
 - `TELEGRAM_BOT_TOKEN` (when set, enables Telegram channel auto-wiring at startup)
 - `GOG_ACCOUNT` (when set, enables Gmail auto-wiring at startup via hooks.gmail)
 - `GOG_KEYRING_PASSWORD` (encrypts file-based keyring for OAuth token storage)

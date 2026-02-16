@@ -173,12 +173,16 @@ Required secrets:
 - at least one provider key:
   - `ANTHROPIC_API_KEY`
   - `OPENAI_API_KEY`
-  - or `GEMINI_API_KEY`
+  - `GEMINI_API_KEY`
+  - `GROQ_API_KEY`
+  - or `OPENROUTER_API_KEY`
 - `CLOUDFLARE_TUNNEL_TOKEN`
 
 Optional:
 
 - `VPS_SSH_PORT` (if not 22)
+- `GROQ_API_KEY` (enables Groq LPU inference — used for ultra-cheap heartbeats at $0.05/M tokens)
+- `OPENROUTER_API_KEY` (enables OpenRouter gateway — used for cost-effective subagents via DeepSeek at $0.25/M tokens)
 - `OPENCLAW_HOOKS_TOKEN` (required only when you want webhook endpoints enabled)
 - `OPENCLAW_HOOKS_PATH` (defaults to `/hooks`)
 - `OPENCLAW_HOOKS_ALLOWED_AGENT_IDS` (comma-separated allowlist for explicit `agentId`, defaults to `*`)
@@ -197,10 +201,12 @@ Optional:
 
 Startup auto-wiring behaviors:
 
-- Provider keys (`OPENAI_API_KEY`, `ANTHROPIC_API_KEY`, `GEMINI_API_KEY`) create matching `auth.profiles.*:default` entries when missing.
+- Provider keys (`OPENAI_API_KEY`, `ANTHROPIC_API_KEY`, `GEMINI_API_KEY`, `GROQ_API_KEY`, `OPENROUTER_API_KEY`) create matching `auth.profiles.*:default` entries when missing.
 - Startup ensures both `main` and `hooks` agents exist; use `hooks` as the default target for webhook workloads.
 - When `OPENCLAW_HOOKS_TOKEN` is set, startup enables top-level `hooks`, writes the shared token, and keeps webhook path/agent allowlist aligned with env defaults (`/hooks`, `*`).
-- Startup selects `agents.defaults.model.primary` from available providers (priority: OpenAI, then Anthropic, then Google) and keeps fallbacks aligned with available provider keys.
+- Startup selects `agents.defaults.model.primary` from available providers (priority: OpenAI, then Anthropic, then Google, then Groq, then OpenRouter) and keeps fallbacks aligned with available provider keys.
+- **Tiered model routing**: When Groq/OpenRouter keys are available, startup assigns cost-appropriate models to different task types: heartbeats use the cheapest available model (Groq Llama 3.1 8B at $0.05/M), subagents use a mid-tier model (DeepSeek V3.2 via OpenRouter at $0.25/M), and the image model defaults to Google Nano Banana (`gemini-2.5-flash-image` at ~$0.039/image) when `GEMINI_API_KEY` is set.
+- When `OPENROUTER_API_KEY` is set, startup registers OpenRouter as a custom provider in `models.providers` with its API endpoint (`https://openrouter.ai/api/v1`).
 - When both `DISCORD_BOT_TOKEN` and `DISCORD_GUILD_ID` are set, startup enables Discord plugin/binding, sets `channels.discord.groupPolicy="open"`, enables wildcard channel access, and seeds a default channel key (`DISCORD_CHANNEL_ID` or `general`).
 - When `TELEGRAM_BOT_TOKEN` is set, startup enables `channels.telegram`, sets `dmPolicy="pairing"` and `groupPolicy="open"`, disables `requireMention` on the wildcard group, and adds a binding from agent `main` to channel `telegram`.
 - `tools.web.fetch` is always enabled (no API key required). When `BRAVE_API_KEY` is set, startup enables `tools.web.search` with `provider="brave"`. When only `PERPLEXITY_API_KEY` is set, `provider="perplexity"` is used instead (Brave takes priority). When `FIRECRAWL_API_KEY` is set, startup enables the Firecrawl fallback for web_fetch.
@@ -224,6 +230,8 @@ Use these examples when you populate GitHub repository secrets:
 | `ANTHROPIC_API_KEY`                       | One provider key required | `sk-ant-...`                       | Anthropic Console                                                                   | Unset unless you add it                 |
 | `OPENAI_API_KEY`                          | One provider key required | `sk-proj-...`                      | OpenAI API keys page                                                                | Unset unless you add it                 |
 | `GEMINI_API_KEY`                          | One provider key required | `AIza...`                          | Google AI Studio / Google Cloud credentials                                         | Unset unless you add it                 |
+| `GROQ_API_KEY`                            | No (recommended)          | `gsk_...`                          | [Groq Console](https://console.groq.com/) (free tier available)                     | Unset (heartbeats use next cheapest)    |
+| `OPENROUTER_API_KEY`                      | No (recommended)          | `sk-or-v1-...`                     | [OpenRouter](https://openrouter.ai/keys)                                            | Unset (subagents use direct providers)  |
 | `DISCORD_BOT_TOKEN`                       | No                        | `MTA...`                           | Discord Developer Portal → Bot token                                                | Unset                                   |
 | `DISCORD_GUILD_ID`                        | No                        | `123456789012345678`               | Discord Developer Mode → copy server ID                                             | Unset                                   |
 | `DISCORD_CHANNEL_ID`                      | No                        | `123456789012345678`               | Discord Developer Mode → copy channel ID                                            | `general`                               |
