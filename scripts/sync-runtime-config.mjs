@@ -387,6 +387,11 @@ if (openrouterApiKey) {
   const providers = ensureObject(modelsConfig, "providers");
   const orProvider = ensureObject(providers, "openrouter");
 
+  const orModels = [
+    { id: "openrouter/deepseek/deepseek-chat", name: "DeepSeek V3" },
+    { id: "openrouter/google/gemini-3-flash", name: "Gemini 3 Flash" },
+  ];
+
   let orChanged = false;
   if (orProvider.baseUrl !== "https://openrouter.ai/api/v1") {
     orProvider.baseUrl = "https://openrouter.ai/api/v1";
@@ -394,6 +399,10 @@ if (openrouterApiKey) {
   }
   if (orProvider.api !== "openai-completions") {
     orProvider.api = "openai-completions";
+    orChanged = true;
+  }
+  if (!Array.isArray(orProvider.models) || !arraysEqual(orProvider.models.map(m => m.id), orModels.map(m => m.id))) {
+    orProvider.models = orModels;
     orChanged = true;
   }
   if (orChanged) {
