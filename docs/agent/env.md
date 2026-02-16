@@ -18,3 +18,7 @@
 - `GOG_KEYRING_PASSWORD` (encrypts file-based keyring for OAuth token storage)
 - `GOG_KEYRING_BACKEND` (default: `file` — required for headless Docker)
 - `GOG_CONFIG_DIR` (default: `/data/gog` — persists credentials across rebuilds)
+
+## PATH and toolchain
+
+The container PATH includes `/usr/local/go/bin` (Go 1.25), `/root/.bun/bin` (Bun), and `/app/node_modules/.bin` (project-local Node binaries). Use `go version` and `gog --version` to verify availability.

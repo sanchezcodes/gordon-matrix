@@ -28,8 +28,10 @@ RUN apt-get update && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/* /var/cache/apt/archives/*
 
-# Copy gog binary from builder stage (Go toolchain stays out of runtime).
+# Copy gog binary and Go toolchain from builder stage.
 COPY --from=gog_builder /out/gog /usr/local/bin/gog
+COPY --from=gog_builder /usr/local/go /usr/local/go
+ENV PATH="/usr/local/go/bin:${PATH}"
 RUN gog --version
 
 WORKDIR /app

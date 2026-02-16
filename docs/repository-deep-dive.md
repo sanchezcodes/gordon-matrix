@@ -36,7 +36,7 @@ gordon-matrix/
 
 ### 1. `Dockerfile` — Container Build
 - Base: `node:22-bookworm` (Debian)
-- Installs: Bun, pnpm, cloudflared, git, ripgrep, python3, vim
+- Installs: Bun, pnpm, cloudflared, git, ripgrep, python3, vim, gog (gogcli), Go 1.25
 - Fetches OpenClaw source from GitHub (version configurable via `OPENCLAW_VERSION` build arg)
 - Builds OpenClaw + its UI with `pnpm build` and `pnpm ui:build`
 - Copies in the template's custom entrypoint, config, and sync script

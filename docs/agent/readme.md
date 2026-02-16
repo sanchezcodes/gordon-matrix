@@ -17,3 +17,18 @@ Main gateway process is started directly by the container command:
 ## Keep context small while debugging
 
 Prefer bounded reads and copy only the smallest relevant span in findings.
+
+## Available CLI tools
+
+| Tool | Description |
+|---|---|
+| `node` / `npx` / `pnpm` | Node.js 22 runtime and package managers |
+| `go` | Go 1.25 toolchain |
+| `gog` | gogcli — Gmail OAuth helper |
+| `bun` | Bun JavaScript runtime |
+| `python3` / `python` | Python 3 interpreter |
+| `git` | Version control |
+| `rg` | ripgrep (fast file search) |
+| `vim` | Text editor |
+| `cloudflared` | Cloudflare Tunnel client (managed by entrypoint) |
+| `curl` | HTTP client |
