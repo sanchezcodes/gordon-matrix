@@ -234,7 +234,7 @@ Use these examples when you populate GitHub repository secrets:
 | `GOG_ACCOUNT`                             | No (Yes for Gmail)        | `user@gmail.com`                   | Your Gmail address                                                                  | Unset (Gmail disabled)                  |
 | `GOG_KEYRING_PASSWORD`                    | No (Yes for Gmail)        | `a3b9f7e2...` (64 hex chars)       | `openssl rand -hex 32` — must remain stable across deploys                          | Unset                                   |
 | `GOG_KEYRING_BACKEND`                     | No                        | `file`                             | Always `file` for Docker (no system keychain)                                       | `file`                                  |
-| `GOG_CONFIG_DIR`                          | No                        | `/data/gog`                        | Override gog config/credential directory                                            | `/data/gog`                             |
+| `GOG_CONFIG_DIR`                          | No                        | `/data/gog`                        | Internal entrypoint variable — controls persistent dir for gog credentials (not a native gogcli variable; the entrypoint symlinks `~/.config/gogcli` to this path) | `/data/gog`                             |
 | `OPENCLAW_CONTROL_UI_ALLOW_INSECURE_AUTH` | No                        | `false` (recommended) or `true`    | Set `true` only when you intentionally want token-only auth without pairing         | `false` enforced by workflow when unset |
 
 ## 5) Deploy
@@ -256,6 +256,9 @@ Push to main → GitHub Actions → SSH to VPS as gordon →
 - `openclaw_version`:
   - `main` (default)
   - specific tag or commit SHA
+- `gog_version`:
+  - `0.11.0` (default)
+  - any valid gogcli tag (without `v` prefix)
 - `reset_config`:
   - set `true` to force a fresh `/data/openclaw.json` on startup
   - set `false` for normal deploys
@@ -492,7 +495,7 @@ docker exec gordon-matrix rm -f /data/gateway.*.lock
 
 ## 9) Gmail setup (one-time OAuth)
 
-Gmail integration requires a one-time OAuth credential setup. Tokens are persisted in `/data/gog/` on the VPS volume and survive container rebuilds.
+Gmail integration requires a one-time OAuth credential setup. Tokens are persisted in `/data/gog/` on the VPS volume and survive container rebuilds. The entrypoint automatically creates a symlink `~/.config/gogcli` → `/data/gog/` so that gogcli (which uses the XDG standard for its config path) reads and writes credentials to the persistent volume.
 
 ### Prerequisites
 

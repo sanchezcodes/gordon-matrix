@@ -29,7 +29,7 @@ This template is tuned for **private VPS deployment + Cloudflare Zero Trust**:
 1. Complete prerequisites and VPS setup (create `gordon` user, install Docker, configure systemd service).
 2. Configure Cloudflare Tunnel ingress pointing to `http://127.0.0.1:3000`.
 3. Add required GitHub Actions secrets (`VPS_HOST`, `VPS_SSH_KEY`, gateway token, tunnel token, and at least one provider key). For internet webhook delivery, also set `OPENCLAW_HOOKS_TOKEN`.
-4. Deploy by pushing to `main` or running the workflow manually (recommended first deploy: `reset_config=true`).
+4. Deploy by pushing to `main` or running the workflow manually (recommended first deploy: `reset_config=true`). The workflow also accepts `gog_version` (default `0.11.0`) to pin the gogcli build.
 5. Validate deploy health and access OpenClaw via your Cloudflare-protected hostname.
 6. If the Control UI shows `disconnected (1008): pairing required`, approve the pending device request from inside the container: `docker exec -it gordon-matrix sh`.
 7. For Discord setup, set `DISCORD_BOT_TOKEN` and `DISCORD_GUILD_ID` (optionally `DISCORD_CHANNEL_ID`); startup auto-configures Discord with open guild-channel policy and seeds a default channel key (`DISCORD_CHANNEL_ID` or `general`).
